@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export default async function Home() {
-  // 1. Check op de server of de gebruiker is ingelogd
+  // 1. Check op de server of de gebruiker is ingelogd - redeploy
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
