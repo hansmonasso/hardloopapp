@@ -1,76 +1,67 @@
-import Link from 'next/link'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+'use client'
 
-export default async function Home() {
-  // 1. Check op de server of de gebruiker is ingelogd - redeploy
-  const cookieStore = await cookies()
+import { useState } from 'react'
+import { supabase } from '../../lib/supabase'
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-             // Server components mogen geen cookies zetten, maar we moeten de methode wel definiëren
-        },
+export default function LoginPage() {
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage('')
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        // Dit zorgt dat hij na het klikken terugkomt op jouw site
+        emailRedirectTo: `${location.origin}/auth/callback`,
       },
-    }
-  )
+    })
 
-  const { data: { user } } = await supabase.auth.getUser()
+    if (error) {
+      setMessage('Er ging iets mis: ' + error.message)
+    } else {
+      setMessage('Check je email voor de inloglink!')
+    }
+    setLoading(false)
+  }
 
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center justify-center font-sans">
-      <main className="flex flex-col gap-8 items-center text-center">
-        <h1 className="text-5xl font-bold tracking-tight">Hardloop Groep</h1>
+    <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-900 p-8 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 z-20">
+        <h2 className="text-2xl font-bold mb-6 text-center">Inloggen</h2>
         
-        {user ? (
-          // DIT ZIE JE ALS JE INGELOGD BENT
-          <>
-            <p className="text-xl text-green-600 font-medium">
-              Welkom terug!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-               <Link 
-                href="/profile" 
-                className="bg-black text-white dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium hover:opacity-80 transition"
-              >
-                Mijn Profiel
-              </Link>
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:opacity-80 transition">
-                + Nieuw Loopje
-              </button>
-            </div>
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-4">Beschikbare Loopjes</h2>
-              <p className="text-gray-500">Nog geen loopjes gepland...</p>
-            </div>
-          </>
-        ) : (
-          // DIT ZIE JE ALS JE NIET BENT INGELOGD
-          <>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-md">
-              Meld je aan, vind een maatje en ga samen hardlopen.
-              Geen kosten, gewoon rennen.
-            </p>
-            <div className="flex gap-4 mt-4">
-              <Link 
-                href="/login" 
-                className="bg-black text-white dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium hover:opacity-80 transition"
-              >
-                Starten
-              </Link>
-              <button className="border border-gray-300 px-6 py-3 rounded-full font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                Bekijk Loopjes
-              </button>
-            </div>
-          </>
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Email adres</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent"
+              placeholder="jouw@email.nl"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-white dark:bg-white dark:text-black p-3 rounded-lg font-bold hover:opacity-80 transition disabled:opacity-50"
+          >
+            {loading ? 'Bezig met versturen...' : 'Stuur Magic Link'}
+          </button>
+        </form>
+
+        {message && (
+          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 rounded-lg text-center text-sm">
+            {message}
+          </div>
         )}
-      </main>
+      </div>
     </div>
-  );
+  )
 }
