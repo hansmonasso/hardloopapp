@@ -23,23 +23,22 @@ export async function GET(request: Request) {
                 cookieStore.set(name, value, options)
               )
             } catch {
-              // De `setAll` methode werd aangeroepen vanuit een Server Component.
-              // Dit kan worden genegeerd als je middleware hebt die de sessie ververst.
+              // The `setAll` method was called from a Server Component.
+              // This can be ignored if you have middleware refreshing
+              // user sessions.
             }
           },
         },
       }
     )
     
-    // Wissel de code in voor een sessie
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      // Als het gelukt is: stuur door naar home
       return NextResponse.redirect(`${origin}`)
     }
   }
 
-  // Als er iets mis ging: stuur terug naar login met foutmelding
+  // Return the user to an error page with instructions
   return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
