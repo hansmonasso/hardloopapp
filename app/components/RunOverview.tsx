@@ -52,10 +52,9 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
   return (
     <div className="w-full">
       
-      {/* KNOPPEN BALK - Verschilt per status */}
+      {/* KNOPPEN BALK */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
          {user ? (
-            // VERSIE VOOR INGELOGDE GEBRUIKERS
             <>
                 <Link href="/profile" className="bg-black text-white dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium hover:opacity-80 transition flex items-center justify-center">
                     Mijn Profiel
@@ -65,26 +64,20 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
                 </Link>
             </>
          ) : (
-            // VERSIE VOOR GASTEN
             <Link href="/login" className="bg-black text-white dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium hover:opacity-80 transition flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                 Inloggen / Registreren
             </Link>
          )}
          
-         {/* CALCULATOR (Voor iedereen) */}
          <Link href="/calculator" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
             <span>🧮</span> Calculator
          </Link>
-         <Link href="/calculator" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
-                <span>🧮</span> Calculator
-             </Link>
-             {/* NIEUW: Training Knop */}
-             <Link href="/training" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
-                <span>📅</span> Schema's
-             </Link>
+         <Link href="/training" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+            <span>📅</span> Schema's
+         </Link>
       </div>
 
-      {/* FILTER BLOK (Voor iedereen zichtbaar) */}
+      {/* FILTER BLOK */}
       <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700 mb-8 max-w-5xl mx-auto">
         <h3 className="font-bold text-sm mb-3 uppercase tracking-wide text-gray-500">Vind een loopje</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
@@ -108,7 +101,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
         {hasFilters && <button onClick={clearFilters} className="text-xs text-blue-500 mt-2 underline">Filters wissen</button>}
       </div>
 
-      {/* LIJST MET LOOPJES (Voor iedereen zichtbaar) */}
+      {/* LIJST MET LOOPJES */}
       <div className="w-full text-left">
         <h2 className="text-2xl font-bold mb-6 text-center sm:text-left">
             {showHistorical ? 'Alle Loopjes' : 'Aankomende Loopjes'} ({filteredRuns.length})
@@ -120,7 +113,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
               <RunCard 
                   key={run.id} 
                   run={run} 
-                  currentUserId={user?.id} // user?.id zorgt dat hij niet crasht als user null is
+                  currentUserId={user?.id}
                   isCompactView={isCompactView}
                   isHighlighted={run.id === highlightId}
               />

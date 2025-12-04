@@ -4,20 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 export default function TrainingPage() {
-  // --- STATE ---
-  const [min5k, setMin5k] = useState('25') // Standaard 25 min
+  const [min5k, setMin5k] = useState('25')
   const [sec5k, setSec5k] = useState('00')
-  const [activePlan, setActivePlan] = useState('5k') // '5k' of '10k'
+  const [activePlan, setActivePlan] = useState('5k')
   
-  // --- LOGICA ---
-  // Hulpfunctie: Bereken tempo in min/km
   const getPace = (factor: number) => {
     const totalSeconds = (parseInt(min5k || '0') * 60) + parseInt(sec5k || '0')
     if (totalSeconds === 0) return "00:00"
     
-    // Bereken target pace per km
-    // Formule: Huidige 5k pace * factor
-    // Factor > 1 is langzamer (duurloop), < 1 is sneller (interval)
     const pace5k = totalSeconds / 5
     const targetPaceSeconds = pace5k * factor
     
@@ -26,8 +20,6 @@ export default function TrainingPage() {
     return `${m}:${s.toString().padStart(2, '0')}`
   }
 
-  // --- DE SCHEMA'S (DATA) ---
-  // Hier kun je later makkelijk weken aan toevoegen
   const plans = {
     '5k': {
         title: "Start to Run (0 naar 5km)",
@@ -39,15 +31,39 @@ export default function TrainingPage() {
                 { type: "Duurloopje", detail: "15 min stevig doorwandelen", pace: "Wandel" }
             ]},
             { id: 2, desc: "De eerste stapjes", sessions: [
-                { type: "Wandelen/Joggen", detail: "5x (3 min joggen, 2 min wandelen)", pace: "Rustig" },
-                { type: "Wandelen/Joggen", detail: "4x (4 min joggen, 2 min wandelen)", pace: "Rustig" },
+                { type: "Wandelen/Joggen", detail: "5x (3 min joggen, 3 min wandelen)", pace: "Rustig" },
+                { type: "Wandelen/Joggen", detail: "4x (4 min joggen, 3 min wandelen)", pace: "Rustig" },
                 { type: "Duurloopje", detail: "20 min afwisselend jog/wandel", pace: "Eigen inzicht" }
             ]},
-            // ... je kunt dit zelf uitbreiden ...
+            { id: 3, desc: "Langere blokken", sessions: [
+                { type: "Wandelen/Joggen", detail: "4x (5 min joggen, 2 min wandelen)", pace: "Rustig" },
+                { type: "Wandelen/Joggen", detail: "3x (6 min joggen, 3 min wandelen)", pace: "Rustig" },
+                { type: "Duurloopje", detail: "25 min afwisselend", pace: "Rustig" }
+            ]},
+            { id: 4, desc: "Halverwege!", sessions: [
+                { type: "Wandelen/Joggen", detail: "3x (7 min joggen, 2 min wandelen)", pace: getPace(1.4) },
+                { type: "Wandelen/Joggen", detail: "2x (8 min joggen, 3 min wandelen)", pace: getPace(1.4) },
+                { type: "Duurloopje", detail: "15 min joggen aan één stuk", pace: getPace(1.5) }
+            ]},
+            { id: 5, desc: "10 minuten grens", sessions: [
+                { type: "Wandelen/Joggen", detail: "2x (10 min joggen, 3 min wandelen)", pace: getPace(1.35) },
+                { type: "Wandelen/Joggen", detail: "3x (8 min joggen, 2 min wandelen)", pace: getPace(1.35) },
+                { type: "Duurloopje", detail: "20 min joggen (wandelpauze mag)", pace: getPace(1.45) }
+            ]},
+            { id: 6, desc: "Kilometers maken", sessions: [
+                { type: "Duurloop", detail: "15 min joggen, 2 min wandel, 10 min joggen", pace: getPace(1.3) },
+                { type: "Duurloop", detail: "20 min joggen aaneen", pace: getPace(1.3) },
+                { type: "Duurloop", detail: "3 km rustig", pace: getPace(1.4) }
+            ]},
+            { id: 7, desc: "Bijna daar", sessions: [
+                { type: "Duurloop", detail: "25 min joggen aaneen", pace: getPace(1.3) },
+                { type: "Interval", detail: "5x 2 min vlot, 2 min rustig", pace: getPace(1.1) },
+                { type: "Duurloop", detail: "4 km rustig", pace: getPace(1.35) }
+            ]},
             { id: 8, desc: "De Finale", sessions: [
-                { type: "Herstel", detail: "20 min joggen", pace: getPace(1.3) },
+                { type: "Herstel", detail: "20 min loslopen", pace: getPace(1.3) },
                 { type: "Prikkel", detail: "2 km joggen, 5 min wandelen", pace: getPace(1.2) },
-                { type: "WEDSTRIJD", detail: "5 KM AANEEN!", pace: getPace(1.0) } // Wedstrijdtempo
+                { type: "WEDSTRIJD", detail: "5 KM AANEEN!", pace: getPace(1.0) }
             ]},
         ]
     },
@@ -56,20 +72,44 @@ export default function TrainingPage() {
         description: "Voor lopers die de 5km al onder de knie hebben.",
         weeks: [
             { id: 1, desc: "Volume opbouwen", sessions: [
-                { type: "Duurloop", detail: "5 km rustig", pace: getPace(1.35) }, // Easy pace
-                { type: "Interval", detail: "6x 400m snel (2 min rust)", pace: getPace(0.95) }, // Interval pace
-                { type: "Duurloop", detail: "7 km rustig", pace: getPace(1.35) }
+                { type: "Duurloop", detail: "5 km rustig", pace: getPace(1.35) },
+                { type: "Interval", detail: "6x 400m snel (2 min rust)", pace: getPace(0.95) },
+                { type: "Duurloop", detail: "6 km rustig", pace: getPace(1.35) }
             ]},
             { id: 2, desc: "Snelheid maken", sessions: [
                 { type: "Herstel", detail: "4 km heel rustig", pace: getPace(1.45) },
-                { type: "Tempo", detail: "3 km op tempo", pace: getPace(1.10) }, // Tempo run
+                { type: "Tempo", detail: "3 km op tempo", pace: getPace(1.10) },
+                { type: "Duurloop", detail: "7 km rustig", pace: getPace(1.35) }
+            ]},
+            { id: 3, desc: "Uithoudingsvermogen", sessions: [
+                { type: "Duurloop", detail: "6 km rustig", pace: getPace(1.35) },
+                { type: "Interval", detail: "4x 800m snel (3 min rust)", pace: getPace(0.95) },
                 { type: "Duurloop", detail: "8 km rustig", pace: getPace(1.35) }
             ]},
-             // ... etc ...
-             { id: 8, desc: "Taper & Race", sessions: [
-                { type: "Loslopen", detail: "30 min heel rustig", pace: getPace(1.40) },
-                { type: "Prikkel", detail: "2 km wedstrijdtempo", pace: getPace(1.05) }, 
-                { type: "WEDSTRIJD", detail: "10 KM KNALLEN!", pace: getPace(1.05) } // 10k is iets langzamer dan 5k pace
+            { id: 4, desc: "Herstelweek", sessions: [
+                { type: "Herstel", detail: "5 km rustig", pace: getPace(1.45) },
+                { type: "Fartlek", detail: "30 min met versnellingen", pace: "Op gevoel" },
+                { type: "Duurloop", detail: "6 km rustig", pace: getPace(1.40) }
+            ]},
+            { id: 5, desc: "Lange Duur", sessions: [
+                { type: "Duurloop", detail: "7 km rustig", pace: getPace(1.35) },
+                { type: "Tempo", detail: "4 km op tempo", pace: getPace(1.10) },
+                { type: "Duurloop", detail: "9 km rustig", pace: getPace(1.35) }
+            ]},
+            { id: 6, desc: "Zware Interval", sessions: [
+                { type: "Herstel", detail: "5 km rustig", pace: getPace(1.45) },
+                { type: "Interval", detail: "5x 1km (3 min rust)", pace: getPace(1.02) },
+                { type: "Duurloop", detail: "8 km rustig", pace: getPace(1.35) }
+            ]},
+            { id: 7, desc: "Taperen", sessions: [
+                { type: "Duurloop", detail: "6 km rustig", pace: getPace(1.35) },
+                { type: "Prikkel", detail: "3 km met 3 versnellingen", pace: getPace(1.15) },
+                { type: "Herstel", detail: "4 km heel rustig", pace: getPace(1.45) }
+            ]},
+             { id: 8, desc: "De Finale", sessions: [
+                { type: "Loslopen", detail: "20 min heel rustig", pace: getPace(1.40) },
+                { type: "Rust", detail: "Rustdag of wandelen", pace: "-" }, 
+                { type: "WEDSTRIJD", detail: "10 KM KNALLEN!", pace: getPace(1.05) }
             ]},
         ]
     }
@@ -87,7 +127,7 @@ export default function TrainingPage() {
             <Link href="/" className="text-sm underline text-gray-500 hover:text-black dark:hover:text-white">Terug naar home</Link>
         </div>
 
-        {/* INPUT SECTIE - HET UNIEKE ELEMENT */}
+        {/* INPUT SECTIE */}
         <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 mb-8">
             <h2 className="font-bold text-lg mb-2 text-blue-900 dark:text-blue-100">⚙️ Personaliseer je schema</h2>
             <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
@@ -103,18 +143,8 @@ export default function TrainingPage() {
 
         {/* TABS */}
         <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-800 pb-1">
-            <button 
-                onClick={() => setActivePlan('5k')}
-                className={`pb-2 px-4 font-bold transition ${activePlan === '5k' ? 'border-b-2 border-black dark:border-white text-black dark:text-white' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-                0 naar 5 km
-            </button>
-            <button 
-                onClick={() => setActivePlan('10k')}
-                className={`pb-2 px-4 font-bold transition ${activePlan === '10k' ? 'border-b-2 border-black dark:border-white text-black dark:text-white' : 'text-gray-400 hover:text-gray-600'}`}
-            >
-                5 naar 10 km
-            </button>
+            <button onClick={() => setActivePlan('5k')} className={`pb-2 px-4 font-bold transition ${activePlan === '5k' ? 'border-b-2 border-black dark:border-white text-black dark:text-white' : 'text-gray-400 hover:text-gray-600'}`}>0 naar 5 km</button>
+            <button onClick={() => setActivePlan('10k')} className={`pb-2 px-4 font-bold transition ${activePlan === '10k' ? 'border-b-2 border-black dark:border-white text-black dark:text-white' : 'text-gray-400 hover:text-gray-600'}`}>5 naar 10 km</button>
         </div>
 
         {/* HET SCHEMA */}
@@ -127,20 +157,14 @@ export default function TrainingPage() {
             <div className="grid grid-cols-1 gap-6">
                 {currentPlan.weeks.map((week: any) => (
                     <div key={week.id} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
-                        {/* Week Header */}
                         <div className="bg-gray-50 dark:bg-gray-800 p-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                             <h3 className="font-bold text-lg">Week {week.id}</h3>
-                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500 bg-white dark:bg-black/20 px-2 py-1 rounded">
-                                {week.desc}
-                            </span>
+                            <span className="text-xs font-medium uppercase tracking-wide text-gray-500 bg-white dark:bg-black/20 px-2 py-1 rounded">{week.desc}</span>
                         </div>
-                        
-                        {/* Sessies */}
                         <div className="divide-y divide-gray-100 dark:divide-gray-800">
                             {week.sessions.map((session: any, idx: number) => (
                                 <div key={idx} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div className="flex items-start gap-4">
-                                        {/* Icoontje op basis van type */}
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-xl
                                             ${session.type.includes('Duur') ? 'bg-green-100 text-green-600' : ''}
                                             ${session.type.includes('Interval') ? 'bg-red-100 text-red-600' : ''}
@@ -156,18 +180,11 @@ export default function TrainingPage() {
                                             {session.type.includes('WEDSTRIJD') && '🏆'}
                                             {!session.type.match(/Duur|Interval|Wandel|Tempo|WEDSTRIJD/) && '👟'}
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-sm">{session.type}</p>
-                                            <p className="text-gray-600 dark:text-gray-300">{session.detail}</p>
-                                        </div>
+                                        <div><p className="font-bold text-sm">{session.type}</p><p className="text-gray-600 dark:text-gray-300">{session.detail}</p></div>
                                     </div>
-                                    
-                                    {/* HET PERSOONLIJKE ELEMENT: DE PACE */}
                                     <div className="text-right pl-4 border-l border-gray-100 dark:border-gray-800 min-w-[100px]">
                                         <span className="block text-xs text-gray-400 uppercase font-bold">Tempo</span>
-                                        <span className="font-mono font-bold text-lg text-blue-600 dark:text-blue-400">
-                                            {session.pace}
-                                        </span>
+                                        <span className="font-mono font-bold text-lg text-blue-600 dark:text-blue-400">{session.pace}</span>
                                         {session.pace.includes(':') && <span className="text-xs text-gray-400"> min/km</span>}
                                     </div>
                                 </div>
@@ -177,7 +194,6 @@ export default function TrainingPage() {
                 ))}
             </div>
         </div>
-
       </div>
     </div>
   )
