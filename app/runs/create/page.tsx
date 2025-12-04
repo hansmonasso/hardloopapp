@@ -10,8 +10,6 @@ export default function CreateRunPage() {
   const [error, setError] = useState('')
 
   const [date, setDate] = useState('')
-  
-  // We splitsen locatie nu in tweeën voor de invoer
   const [city, setCity] = useState('')
   const [street, setStreet] = useState('')
   
@@ -20,21 +18,16 @@ export default function CreateRunPage() {
   const [paceMax, setPaceMax] = useState('')
   const [description, setDescription] = useState('')
 
-  // Check of het adres bestaat via OpenStreetMap
+  // NIEUW: Wedstrijd velden
+  const [isRace, setIsRace] = useState(false)
+  const [externalLink, setExternalLink] = useState('')
+
   async function validateAddress(cityInput: string, streetInput: string) {
     try {
-      // We zoeken op de combinatie van straat en stad
       const query = `${streetInput}, ${cityInput}`
       const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=nl&format=json&limit=1`)
       const data = await response.json()
-      
-      if (data && data.length > 0) {
-        // Gevonden! We returnen de netjes geformatteerde naam die OSM ons geeft
-        // Of we returnen true, en gebruiken onze eigen opmaak.
-        // Laten we simpelweg true returnen als het bestaat.
-        return true
-      }
-      return false
+      return data && data.length > 0
     } catch (e) {
       console.error(e)
       return false
@@ -54,27 +47,25 @@ export default function CreateRunPage() {
       return
     }
 
-    // 1. VALIDATIE: Check of het adres echt bestaat
     const isValid = await validateAddress(city, street)
-    
     if (!isValid) {
-      setError(`We konden het adres '${street}' in '${city}' niet vinden. Controleer de spelling of probeer een straat in de buurt.`)
+      setError(`We konden het adres '${street}' in '${city}' niet vinden.`)
       setLoading(false)
       return
     }
 
-    // 2. We combineren Straat + Stad voor in de database
-    // Dit zorgt dat je filters op de homepage blijven werken!
     const fullLocationString = `${street}, ${city}`
 
     const { error: insertError } = await supabase.from('runs').insert({
       organizer_id: user.id,
       start_time: date,
-      location: fullLocationString, // Opslaan als "Markt 1, Aalten"
+      location: fullLocationString,
       distance_km: parseFloat(distance),
       pace_min: paceMin,
       pace_max: paceMax,
-      description: description
+      description: description,
+      is_race: isRace,           // NIEUW
+      external_link: externalLink // NIEUW
     })
 
     if (insertError) {
@@ -93,6 +84,36 @@ export default function CreateRunPage() {
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
           
+          {/* NIEUW: Wedstrijd Switch */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <input 
+              type="checkbox" 
+              id="raceToggle"
+              checked={isRace}
+              onChange={(e) => setIsRace(e.target.checked)}
+              className="w-5 h-5 accent-yellow-500 cursor-pointer"
+            />
+            <label htmlFor="raceToggle" className="cursor-pointer font-bold select-none flex items-center gap-2">
+               🏆 Is dit een officiële wedstrijd?
+            </label>
+          </div>
+
+          {/* NIEUW: Link veld (alleen zichtbaar als het een wedstrijd is) */}
+          {isRace && (
+            <div className="animate-in fade-in slide-in-from-top-2">
+              <label className="block text-sm font-medium mb-1">Link naar inschrijving/info</label>
+              <input
+                type="url"
+                placeholder="https://www.zevenheuvelenloop.nl..."
+                value={externalLink}
+                onChange={(e) => setExternalLink(e.target.value)}
+                className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20"
+              />
+            </div>
+          )}
+
+          <hr className="border-gray-100 dark:border-gray-800 my-2" />
+
           <div>
             <label className="block text-sm font-medium mb-1">Datum & Tijd</label>
             <input
@@ -104,7 +125,6 @@ export default function CreateRunPage() {
             />
           </div>
 
-          {/* NIEUWE OPZET LOCATIE */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Stad / Dorp</label>
@@ -129,9 +149,6 @@ export default function CreateRunPage() {
               />
             </div>
           </div>
-          <p className="text-xs text-gray-500 -mt-2">
-            * We controleren of dit adres echt bestaat.
-          </p>
 
           <div>
             <label className="block text-sm font-medium mb-1">Afstand (km)</label>
@@ -148,61 +165,36 @@ export default function CreateRunPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Pace van (min/km)</label>
-              <input
-                type="text"
-                placeholder="5:00"
-                value={paceMin}
-                onChange={(e) => setPaceMin(e.target.value)}
-                className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent"
-              />
+              <label className="block text-sm font-medium mb-1">Pace van</label>
+              <input type="text" placeholder="5:00" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Pace tot (min/km)</label>
-              <input
-                type="text"
-                placeholder="5:30"
-                value={paceMax}
-                onChange={(e) => setPaceMax(e.target.value)}
-                className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent"
-              />
+              <label className="block text-sm font-medium mb-1">Pace tot</label>
+              <input type="text" placeholder="5:30" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Extra info (Bijv. verzamelplek)</label>
+            <label className="block text-sm font-medium mb-1">Extra info</label>
             <textarea
               rows={3}
-              placeholder="We verzamelen bij het bankje voor de kerk..."
+              placeholder="We verzamelen bij..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent"
             />
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
-                ⚠️ {error}
-            </div>
-          )}
+          {error && <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">{error}</div>}
 
           <div className="flex gap-4 mt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-black text-white dark:bg-white dark:text-black p-3 rounded-lg font-bold hover:opacity-80 transition"
-            >
-              {loading ? 'Adres checken...' : 'Loopje Aanmaken'}
+            <button type="submit" disabled={loading} className="flex-1 bg-black text-white dark:bg-white dark:text-black p-3 rounded-lg font-bold hover:opacity-80 transition">
+              {loading ? 'Bezig...' : (isRace ? 'Wedstrijd Aanmaken' : 'Loopje Aanmaken')}
             </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-            >
+            <button type="button" onClick={() => router.back()} className="px-4 py-3 rounded-lg border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition">
               Annuleren
             </button>
           </div>
-
         </form>
       </div>
     </div>
