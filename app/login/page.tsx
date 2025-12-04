@@ -83,21 +83,21 @@ export default function LoginPage() {
               </button>
             </form>
         ) : (
-            // STAP 2: CODE (Aangepast naar max 8 tekens)
+            // STAP 2: CODE (Aangepast naar 8 cijfers in tekst en placeholder)
             <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded text-sm text-blue-800 dark:text-blue-200 mb-2">
                 We hebben een code gestuurd naar <strong>{email}</strong>.
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Jouw code</label>
+                <label className="block text-sm font-medium mb-1">Jouw Inlogcode</label>
                 <input
                   type="text"
                   required
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-center text-2xl tracking-widest font-mono"
-                  placeholder="123456"
-                  maxLength={8} // <--- HIER AANGEPAST NAAR 8
+                  placeholder="12345678" 
+                  maxLength={8} 
                 />
               </div>
               <button
