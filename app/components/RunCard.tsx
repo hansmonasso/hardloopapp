@@ -44,7 +44,14 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   const hasOtherParticipants = participants.some(p => p.user_id !== run.organizer_id)
 
   async function toggleParticipation() {
-    if (!currentUserId) return alert('Je moet ingelogd zijn!')
+    // NIEUW: Als je niet bent ingelogd -> ga naar login pagina
+    if (!currentUserId) {
+        if(confirm('Om je aan te melden moet je even inloggen. Wil je naar de inlogpagina?')) {
+            router.push('/login')
+        }
+        return
+    }
+
     setLoading(true)
     if (isJoined) {
       await supabase.from('participants').delete().eq('run_id', run.id).eq('user_id', currentUserId)
