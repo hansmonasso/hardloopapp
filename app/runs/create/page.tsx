@@ -25,10 +25,12 @@ export default function CreateRunPage() {
   const [externalLink, setExternalLink] = useState('')
   const [selectedDistances, setSelectedDistances] = useState<number[]>([])
 
+  // AANGEPAST: Zoekt nu in NL en DE
   async function validateAddress(cityInput: string, streetInput: string) {
     try {
       const query = `${streetInput}, ${cityInput}`
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=nl&format=json&limit=1`)
+      // Hier is de wijziging: countrycodes=nl,de
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=nl,de&format=json&limit=1`)
       const data = await response.json()
       return data && data.length > 0
     } catch (e) {
@@ -54,7 +56,7 @@ export default function CreateRunPage() {
     if (!user) { setError('Je moet ingelogd zijn.'); setLoading(false); return }
 
     const isValid = await validateAddress(city, street)
-    if (!isValid) { setError(`Adres niet gevonden.`); setLoading(false); return }
+    if (!isValid) { setError(`Adres niet gevonden (in NL of DE).`); setLoading(false); return }
 
     let finalDistanceKm = 0
     let finalRaceDistances = null
@@ -77,8 +79,8 @@ export default function CreateRunPage() {
       location: `${street}, ${city}`,
       distance_km: finalDistanceKm, 
       race_distances: finalRaceDistances,
-      pace_min: isRace ? null : paceMin, // Geen pace bij wedstrijd
-      pace_max: isRace ? null : paceMax, // Geen pace bij wedstrijd
+      pace_min: isRace ? null : paceMin,
+      pace_max: isRace ? null : paceMax,
       description: description,
       is_race: isRace,
       title: isRace ? title : null,
@@ -170,7 +172,6 @@ export default function CreateRunPage() {
                 <input type="number" step="0.1" required={!isRace} placeholder="5.0" value={distance} onChange={(e) => setDistance(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
               </div>
 
-              {/* PACE: Alleen tonen als GEEN wedstrijd */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Pace van</label>
