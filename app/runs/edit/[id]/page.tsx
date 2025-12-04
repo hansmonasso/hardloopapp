@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../../../../lib/supabase' // Let op: 4 stapjes terug
+import { supabase } from '../../../../lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 
 export default function EditRunPage() {
@@ -18,6 +18,11 @@ export default function EditRunPage() {
   const [paceMin, setPaceMin] = useState('')
   const [paceMax, setPaceMax] = useState('')
   const [description, setDescription] = useState('')
+  
+  // NIEUW: De wedstrijd velden ook hier toevoegen
+  const [isRace, setIsRace] = useState(false)
+  const [title, setTitle] = useState('')
+  const [externalLink, setExternalLink] = useState('')
 
   useEffect(() => {
     loadRunData()
@@ -27,7 +32,6 @@ export default function EditRunPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return router.push('/login')
 
-    // 1. Haal het loopje op
     const { data: run, error } = await supabase
       .from('runs')
       .select('*')
@@ -39,13 +43,12 @@ export default function EditRunPage() {
       return router.push('/')
     }
 
-    // 2. Check: Ben jij de eigenaar?
     if (run.organizer_id !== user.id) {
       alert('Jij mag dit niet aanpassen.')
       return router.push('/')
     }
 
-    // 3. Check: Zijn er al andere deelnemers?
+    // Check of er al deelnemers zijn
     const { data: participants } = await supabase
       .from('participants')
       .select('user_id')
@@ -57,18 +60,23 @@ export default function EditRunPage() {
       return router.push('/')
     }
 
-    // 4. Alles goed? Vul de velden!
-    // Datum format is lastig: database is UTC, input wil "yyyy-MM-ddThh:mm"
+    // Datum fixen voor input veld
     const d = new Date(run.start_time)
-    // We doen een trucje om de lokale tijd te pakken voor het input veld
     const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
     
+    // Velden vullen met data uit database
     setDate(localIso)
     setLocation(run.location)
     setDistance(run.distance_km)
     setPaceMin(run.pace_min)
     setPaceMax(run.pace_max)
     setDescription(run.description || '')
+    
+    // NIEUW: Wedstrijd data vullen
+    setIsRace(run.is_race || false)
+    setTitle(run.title || '')
+    setExternalLink(run.external_link || '')
+
     setLoading(false)
   }
 
@@ -85,7 +93,11 @@ export default function EditRunPage() {
         distance_km: parseFloat(distance),
         pace_min: paceMin,
         pace_max: paceMax,
-        description: description
+        description: description,
+        // NIEUW: Opslaan
+        is_race: isRace,
+        title: isRace ? title : null,
+        external_link: externalLink
       })
       .eq('id', runId)
 
@@ -94,7 +106,7 @@ export default function EditRunPage() {
       setLoading(false)
     } else {
       router.push('/') 
-      router.refresh() // Zorg dat de homepage de nieuwe info toont
+      router.refresh()
     }
   }
 
@@ -107,6 +119,49 @@ export default function EditRunPage() {
         
         <form onSubmit={handleUpdate} className="flex flex-col gap-4 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
           
+          {/* NIEUW: Wedstrijd Switch */}
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <input 
+              type="checkbox" 
+              id="raceToggle"
+              checked={isRace}
+              onChange={(e) => setIsRace(e.target.checked)}
+              className="w-5 h-5 accent-yellow-500 cursor-pointer"
+            />
+            <label htmlFor="raceToggle" className="cursor-pointer font-bold select-none flex items-center gap-2">
+               🏆 Is dit een officiële wedstrijd?
+            </label>
+          </div>
+
+          {/* NIEUW: Wedstrijd Velden */}
+          {isRace && (
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-800/30">
+              <div>
+                <label className="block text-sm font-bold mb-1 text-yellow-800 dark:text-yellow-500">Naam evenement</label>
+                <input
+                    type="text"
+                    placeholder="Bijv. Zevenheuvelenloop"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-white dark:bg-black/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1 text-yellow-800 dark:text-yellow-500">Link naar inschrijving</label>
+                <input
+                    type="url"
+                    placeholder="https://..."
+                    value={externalLink}
+                    onChange={(e) => setExternalLink(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-white dark:bg-black/20"
+                />
+              </div>
+            </div>
+          )}
+
+          <hr className="border-gray-100 dark:border-gray-800 my-2" />
+
           <div>
             <label className="block text-sm font-medium mb-1">Datum & Tijd</label>
             <input type="datetime-local" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
