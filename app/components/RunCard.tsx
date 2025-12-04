@@ -135,7 +135,8 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
                     <div className="mb-4 text-sm text-gray-600 dark:text-gray-300">
                         {!isRace && <p className="mb-1">⚡ Pace: {run.pace_min} - {run.pace_max} min/km</p>}
                         <p>👤 Org: {isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</p>
-                        {run.description && <p className="italic mt-2 text-gray-500">"{run.description}"</p>}
+                        {/* Contrast aangepast: text-gray-700 dark:text-gray-300 */}
+                        {run.description && <p className="italic mt-2 text-gray-700 dark:text-gray-300">"{run.description}"</p>}
                     </div>
                     {isOrganizer && !hasOtherParticipants && (
                         <div className="flex gap-2 mb-4">
@@ -195,7 +196,8 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
       <div className="space-y-3 text-gray-600 dark:text-gray-300 mb-6 flex-grow border-t border-black/5 pt-4">
         {!isRace && <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>}
         <p className="flex items-center gap-2 text-sm"><span className="text-lg">👤</span> <span>Org: <span className="font-semibold">{isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</span></span></p>
-        {run.description && <p className="text-sm italic mt-2 text-gray-500 bg-white/50 p-3 rounded-lg">"{run.description}"</p>}
+        {/* Contrast aangepast: text-gray-700 dark:text-gray-300 en achtergrond iets donkerder in dark mode */}
+        {run.description && <p className="text-sm italic mt-2 text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-black/30 p-3 rounded-lg">"{run.description}"</p>}
         
         <div className="mt-2">
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Wie gaan er mee? ({participants.length})</p>
