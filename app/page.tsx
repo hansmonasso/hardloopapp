@@ -25,9 +25,9 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen p-8 flex flex-col items-center font-sans">
-      <main className="flex flex-col gap-8 items-center text-center w-full max-w-4xl">
+      <main className="flex flex-col gap-8 items-center text-center w-full max-w-5xl">
         
-        {/* HIER IS DE NIEUWE TITEL */}
+        {/* De Titel */}
         <div className="mt-10 mb-4">
             <h1 className="text-5xl font-bold tracking-tight text-black dark:text-white">
             Social Run
@@ -37,6 +37,7 @@ export default async function Home() {
             </p>
         </div>
         
+        {/* Het overzicht met filters en knoppen */}
         <RunOverview runs={runs || []} user={user} />
       </main>
     </div>

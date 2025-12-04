@@ -18,7 +18,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
   const [filterOnlyRaces, setFilterOnlyRaces] = useState(false)
   const [showHistorical, setShowHistorical] = useState(false)
   
-  // NIEUW: Compacte weergave switch
+  // Compacte weergave switch
   const [isCompactView, setIsCompactView] = useState(false)
   
   const filteredRuns = runs.filter(run => {
@@ -49,9 +49,17 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
     <div className="w-full">
       {user ? (
         <>
+          {/* KNOPPEN BALK (Inclusief Calculator!) */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-             <Link href="/profile" className="bg-black text-white dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium hover:opacity-80 transition flex items-center justify-center">Mijn Profiel</Link>
-             <Link href="/runs/create" className="bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:opacity-80 transition flex items-center justify-center">+ Nieuw Loopje</Link>
+             <Link href="/profile" className="bg-black text-white dark:bg-white dark:text-black px-6 py-3 rounded-full font-medium hover:opacity-80 transition flex items-center justify-center">
+                Mijn Profiel
+             </Link>
+             <Link href="/runs/create" className="bg-blue-600 text-white px-6 py-3 rounded-full font-medium hover:opacity-80 transition flex items-center justify-center">
+                + Nieuw Loopje
+             </Link>
+             <Link href="/calculator" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                <span>🧮</span> Calculator
+             </Link>
           </div>
 
           <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700 mb-8 max-w-5xl mx-auto">
@@ -76,7 +84,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
                     Toon ook historie
                   </label>
 
-                  {/* NIEUW: Compact View toggle */}
+                  {/* Compact View toggle */}
                   <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-blue-600 dark:text-blue-400">
                     <input type="checkbox" checked={isCompactView} onChange={(e) => setIsCompactView(e.target.checked)} className="w-4 h-4 accent-blue-600" />
                     Compacte lijst
@@ -100,7 +108,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
                       key={run.id} 
                       run={run} 
                       currentUserId={user.id} 
-                      isCompactView={isCompactView} // NIEUW: Prop doorgeven
+                      isCompactView={isCompactView}
                   />
                 ))}
               </div>
