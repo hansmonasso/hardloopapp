@@ -70,15 +70,29 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation() 
-    const shareUrl = `${window.location.origin}/?run_id=${run.id}`
-    const shareText = run.is_race ? `🏆 Doe mee met ${run.title}!` : `🏃 Ren mee in ${run.location}!`
+    
+    // NIEUW: We gebruiken nu de schone /share/ link
+    const shareUrl = `${window.location.origin}/share/${run.id}`
+    
+    const shareText = run.is_race 
+        ? `🏆 Doe mee met ${run.title || 'een wedstrijd'} in ${run.location}!`
+        : `🏃 Ren mee in ${run.location} op ${formatDatum(run.start_time)}!`;
 
     if (navigator.share) {
-        try { await navigator.share({ title: 'Social Run', text: shareText, url: shareUrl }) } catch (err) {}
+        try {
+            await navigator.share({
+                title: 'Social Run',
+                text: shareText,
+                url: shareUrl
+            })
+        } catch (err) {
+            console.log('Share geannuleerd')
+        }
     } else {
         navigator.clipboard.writeText(shareUrl)
-        alert('Link gekopieerd!')
+        alert('Link gekopieerd! Je kunt hem nu plakken.')
     }
+  }
   }
 
   const formatDatum = (datumString: string, short = false) => {
