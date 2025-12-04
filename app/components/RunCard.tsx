@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -8,10 +8,12 @@ interface RunCardProps {
   run: any
   currentUserId: string | undefined
   isCompactView?: boolean
+  isHighlighted?: boolean // NIEUW
 }
 
-export default function RunCard({ run, currentUserId, isCompactView = false }: RunCardProps) {
+export default function RunCard({ run, currentUserId, isCompactView = false, isHighlighted = false }: RunCardProps) {
   const router = useRouter()
+  const cardRef = useRef<HTMLDivElement>(null) // Voor scrollen
   const [participants, setParticipants] = useState<any[]>([])
   const [isJoined, setIsJoined] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -21,7 +23,15 @@ export default function RunCard({ run, currentUserId, isCompactView = false }: R
 
   useEffect(() => {
     fetchParticipants()
-  }, [])
+    
+    // NIEUW: Als dit het gedeelde loopje is: scroll ernaartoe en klap open!
+    if (isHighlighted) {
+        setIsExpanded(true)
+        setTimeout(() => {
+            cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 500) // Korte vertraging om zeker te zijn dat alles geladen is
+    }
+  }, [isHighlighted])
 
   async function fetchParticipants() {
     const { data } = await supabase.from('participants').select('user_id, profiles(full_name)').eq('run_id', run.id)
@@ -51,38 +61,22 @@ export default function RunCard({ run, currentUserId, isCompactView = false }: R
     if (!error) router.refresh()
   }
 
-  // NIEUW: De Share Functie
   const handleShare = async (e: React.MouseEvent) => {
-    e.stopPropagation() // Voorkomt dat de kaart uitklapt als je op share klikt
-    
-    const shareUrl = window.location.href // Deel de huidige pagina
-    const shareText = run.is_race 
-        ? `🏆 Doe mee met ${run.title || 'een wedstrijd'} in ${run.location}!`
-        : `🏃 Ren mee in ${run.location} op ${formatDatum(run.start_time)}!`;
+    e.stopPropagation() 
+    const shareUrl = `${window.location.origin}/?run_id=${run.id}`
+    const shareText = run.is_race ? `🏆 Doe mee met ${run.title}!` : `🏃 Ren mee in ${run.location}!`
 
     if (navigator.share) {
-        // Mobiel: Open het native menu (Insta, Whatsapp, X, etc.)
-        try {
-            await navigator.share({
-                title: 'Social Run',
-                text: shareText,
-                url: shareUrl
-            })
-        } catch (err) {
-            console.log('Share geannuleerd')
-        }
+        try { await navigator.share({ title: 'Social Run', text: shareText, url: shareUrl }) } catch (err) {}
     } else {
-        // Desktop fallback: Kopieer naar klembord
         navigator.clipboard.writeText(shareUrl)
-        alert('Link gekopieerd! Je kunt hem nu plakken in X, Facebook of Instagram.')
+        alert('Link gekopieerd!')
     }
   }
 
   const formatDatum = (datumString: string, short = false) => {
     const datum = new Date(datumString)
-    if (short) {
-        return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: 'short' })
-    }
+    if (short) return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: 'short' })
     return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
   }
   
@@ -91,9 +85,15 @@ export default function RunCard({ run, currentUserId, isCompactView = false }: R
   }
 
   const isRace = run.is_race
-  const cardBorderClass = isRace 
+  
+  // Bepaal de stijl. Als highlighted: dikke blauwe rand!
+  let cardBorderClass = isRace 
     ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10' 
     : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'
+  
+  if (isHighlighted) {
+      cardBorderClass = 'border-blue-500 ring-4 ring-blue-500/20 bg-blue-50/50 dark:bg-blue-900/20'
+  }
 
   const distanceDisplay = (isRace && run.race_distances) 
     ? run.race_distances.replace(/,/g, ' /').replace(/\./g, ',')
@@ -102,48 +102,30 @@ export default function RunCard({ run, currentUserId, isCompactView = false }: R
   // --- COMPACTE WEERGAVE ---
   if (isCompactView) {
     return (
-        <div className={`${cardBorderClass} border rounded-lg transition overflow-hidden`}>
-            <div 
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
-            >
+        <div ref={cardRef} className={`${cardBorderClass} border rounded-lg transition overflow-hidden`}>
+            <div onClick={() => setIsExpanded(!isExpanded)} className="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5">
                 <div className="flex items-center gap-4 overflow-hidden">
                     <div className="flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 min-w-[60px]">
                         <span className="text-xs font-bold uppercase text-gray-500">{formatDatum(run.start_time, true).split(' ')[0]}</span>
                         <span className="text-lg font-black leading-none">{new Date(run.start_time).getDate()}</span>
                     </div>
-
                     <div className="flex flex-col truncate">
                         <div className="flex items-center gap-2">
                             {isRace && <span className="text-xs">🏆</span>}
-                            <span className="font-bold truncate text-gray-900 dark:text-gray-100">
-                                {run.title || run.location}
-                            </span>
+                            <span className="font-bold truncate text-gray-900 dark:text-gray-100">{run.title || run.location}</span>
                         </div>
-                        <span className="text-xs text-gray-500 truncate flex items-center gap-2">
-                            ⏰ {formatTijd(run.start_time)} 
-                            {run.title && <span>• 📍 {run.location}</span>}
-                        </span>
+                        <span className="text-xs text-gray-500 truncate flex items-center gap-2">⏰ {formatTijd(run.start_time)} {run.title && <span>• 📍 {run.location}</span>}</span>
                     </div>
                 </div>
-
                 <div className="flex items-center gap-3 pl-2 flex-shrink-0">
                     <div className="text-right">
                         <span className="block font-bold text-gray-900 dark:text-gray-100">{distanceDisplay} km</span>
                         {isJoined && <span className="text-[10px] text-green-600 font-bold block bg-green-100 dark:bg-green-900 px-1 rounded">DEELNEMER</span>}
                     </div>
-                    
-                    {/* Compact Share Button */}
-                    <button onClick={handleShare} className="p-2 text-gray-400 hover:text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-                        </svg>
-                    </button>
-
+                    <button onClick={handleShare} className="p-2 text-gray-400 hover:text-blue-600"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg></button>
                     <svg className={`w-5 h-5 text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </div>
             </div>
-
             {isExpanded && (
                 <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-black/20">
                     <div className="mb-4 text-sm text-gray-600 dark:text-gray-300">
@@ -174,23 +156,11 @@ export default function RunCard({ run, currentUserId, isCompactView = false }: R
 
   // --- STANDAARD WEERGAVE ---
   return (
-    <div className={`${cardBorderClass} border-2 p-6 rounded-xl shadow-sm hover:shadow-md transition flex flex-col h-full relative group`}>
+    <div ref={cardRef} className={`${cardBorderClass} border-2 p-6 rounded-xl shadow-sm hover:shadow-md transition flex flex-col h-full relative group`}>
       {isRace && <div className="absolute -top-3 left-6 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm">🏆 WEDSTRIJD</div>}
       
-      {/* HEADER KNOPPEN: SHARE + (EDIT/DELETE) */}
       <div className="absolute top-4 right-4 flex gap-2 z-10">
-          
-          {/* Share Button (Voor iedereen) */}
-          <button 
-            onClick={handleShare}
-            className="text-gray-400 hover:text-blue-600 p-2 bg-white/80 dark:bg-black/50 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm transition"
-            title="Delen"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-            </svg>
-          </button>
-
+          <button onClick={handleShare} className="text-gray-400 hover:text-blue-600 p-2 bg-white/80 dark:bg-black/50 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm transition"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg></button>
           {isOrganizer && !hasOtherParticipants && (
             <>
                 <button onClick={() => router.push(`/runs/edit/${run.id}`)} className="text-gray-400 hover:text-blue-600 p-2 bg-white/80 dark:bg-black/50 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></button>
