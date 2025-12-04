@@ -16,25 +16,17 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
   const [filterStartDate, setFilterStartDate] = useState('')
   const [filterEndDate, setFilterEndDate] = useState('')
   const [filterOnlyRaces, setFilterOnlyRaces] = useState(false)
-  
-  // NIEUW: Historie knop (Standaard uit = verberg oude loopjes)
   const [showHistorical, setShowHistorical] = useState(false)
   
+  // NIEUW: Compacte weergave switch
+  const [isCompactView, setIsCompactView] = useState(false)
+  
   const filteredRuns = runs.filter(run => {
-    // We maken datum objecten om mee te rekenen
     const runDateObj = new Date(run.start_time)
     const now = new Date()
-    
-    // Voor de string vergelijking (filters)
     const runDateString = runDateObj.toISOString().split('T')[0]
 
-    // NIEUW: Historie Filter logic
-    // Als 'Toon historie' UIT staat, en het loopje is in het verleden... WEG ERMEE.
-    if (!showHistorical && runDateObj < now) {
-        return false
-    }
-
-    // De standaard filters
+    if (!showHistorical && runDateObj < now) return false
     if (filterLocation && !run.location.toLowerCase().includes(filterLocation.toLowerCase())) return false
     if (filterMinDist && run.distance_km < parseFloat(filterMinDist)) return false
     if (filterMaxDist && run.distance_km > parseFloat(filterMaxDist)) return false
@@ -46,13 +38,9 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
   })
 
   const clearFilters = () => {
-    setFilterLocation('')
-    setFilterMinDist('')
-    setFilterMaxDist('')
-    setFilterStartDate('')
-    setFilterEndDate('')
-    setFilterOnlyRaces(false)
-    setShowHistorical(false) // Ook resetten
+    setFilterLocation(''); setFilterMinDist(''); setFilterMaxDist(''); 
+    setFilterStartDate(''); setFilterEndDate(''); setFilterOnlyRaces(false); 
+    setShowHistorical(false);
   }
 
   const hasFilters = filterLocation || filterMinDist || filterMaxDist || filterStartDate || filterEndDate || filterOnlyRaces || showHistorical
@@ -77,17 +65,21 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
               <div><input type="number" placeholder="Max km" value={filterMaxDist} onChange={(e) => setFilterMaxDist(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900" /></div>
               
               {/* CHECKBOXES */}
-              <div className="flex flex-col justify-center gap-2 h-full py-1">
-                  {/* Wedstrijden */}
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex flex-col justify-center gap-1 h-full py-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-gray-700 dark:text-gray-300">
                     <input type="checkbox" checked={filterOnlyRaces} onChange={(e) => setFilterOnlyRaces(e.target.checked)} className="w-4 h-4 accent-yellow-500" />
                     Alleen Wedstrijden
                   </label>
                   
-                  {/* NIEUW: Historie */}
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-gray-500 dark:text-gray-400">
                     <input type="checkbox" checked={showHistorical} onChange={(e) => setShowHistorical(e.target.checked)} className="w-4 h-4 accent-gray-500" />
                     Toon ook historie
+                  </label>
+
+                  {/* NIEUW: Compact View toggle */}
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-blue-600 dark:text-blue-400">
+                    <input type="checkbox" checked={isCompactView} onChange={(e) => setIsCompactView(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+                    Compacte lijst
                   </label>
               </div>
             </div>
@@ -97,12 +89,20 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
 
           <div className="w-full text-left">
             <h2 className="text-2xl font-bold mb-6 text-center sm:text-left">
-                {showHistorical ? 'Alle Loopjes (Incl. Historie)' : 'Aankomende Loopjes'} ({filteredRuns.length})
+                {showHistorical ? 'Alle Loopjes' : 'Aankomende Loopjes'} ({filteredRuns.length})
             </h2>
             
             {filteredRuns.length > 0 ? (
-              <div className="grid gap-6 md:grid-cols-2">
-                {filteredRuns.map((run: any) => <RunCard key={run.id} run={run} currentUserId={user.id} />)}
+              // Als compact: gebruik een flex-col (lijst onder elkaar). Anders grid (blokken naast elkaar)
+              <div className={isCompactView ? "flex flex-col gap-3" : "grid gap-6 md:grid-cols-2"}>
+                {filteredRuns.map((run: any) => (
+                  <RunCard 
+                      key={run.id} 
+                      run={run} 
+                      currentUserId={user.id} 
+                      isCompactView={isCompactView} // NIEUW: Prop doorgeven
+                  />
+                ))}
               </div>
             ) : <p className="text-gray-500 text-center py-10">Geen loopjes gevonden.</p>}
           </div>

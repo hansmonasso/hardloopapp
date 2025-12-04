@@ -7,13 +7,15 @@ import { useRouter } from 'next/navigation'
 interface RunCardProps {
   run: any
   currentUserId: string | undefined
+  isCompactView?: boolean // NIEUW: Optionele prop
 }
 
-export default function RunCard({ run, currentUserId }: RunCardProps) {
+export default function RunCard({ run, currentUserId, isCompactView = false }: RunCardProps) {
   const router = useRouter()
   const [participants, setParticipants] = useState<any[]>([])
   const [isJoined, setIsJoined] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false) // NIEUW: Voor het uitklappen
 
   const isOrganizer = currentUserId === run.organizer_id
 
@@ -44,14 +46,22 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
   }
 
   async function deleteRun() {
-    if (!confirm('Weet je zeker?')) return
+    if (!confirm('Weet je zeker dat je dit loopje wilt verwijderen?')) return
     const { error } = await supabase.from('runs').delete().eq('id', run.id)
     if (!error) router.refresh()
   }
 
-  const formatDatum = (datumString: string) => {
+  const formatDatum = (datumString: string, short = false) => {
     const datum = new Date(datumString)
+    if (short) {
+        // Formaat voor compact: "Za 06 dec"
+        return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: 'short' })
+    }
     return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+  }
+  
+  const formatTijd = (datumString: string) => {
+      return new Date(datumString).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
   }
 
   const isRace = run.is_race
@@ -63,6 +73,100 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
     ? run.race_distances.replace(/,/g, ' /').replace(/\./g, ',')
     : run.distance_km.toString().replace('.', ',')
 
+  // --- COMPACTE WEERGAVE ---
+  if (isCompactView) {
+    return (
+        <div className={`${cardBorderClass} border rounded-lg transition overflow-hidden`}>
+            {/* De Balk (Klikbaar) */}
+            <div 
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5"
+            >
+                <div className="flex items-center gap-4 overflow-hidden">
+                    {/* Datum blokje */}
+                    <div className="flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 min-w-[60px]">
+                        <span className="text-xs font-bold uppercase text-gray-500">{formatDatum(run.start_time, true).split(' ')[0]}</span>
+                        <span className="text-lg font-black leading-none">{new Date(run.start_time).getDate()}</span>
+                    </div>
+
+                    <div className="flex flex-col truncate">
+                        <div className="flex items-center gap-2">
+                            {isRace && <span className="text-xs">🏆</span>}
+                            <span className="font-bold truncate text-gray-900 dark:text-gray-100">
+                                {run.title || run.location}
+                            </span>
+                        </div>
+                        <span className="text-xs text-gray-500 truncate flex items-center gap-2">
+                            ⏰ {formatTijd(run.start_time)} 
+                            {run.title && <span>• 📍 {run.location}</span>}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4 pl-2 flex-shrink-0">
+                    <div className="text-right">
+                        <span className="block font-bold text-gray-900 dark:text-gray-100">{distanceDisplay} km</span>
+                        {isJoined && <span className="text-[10px] text-green-600 font-bold block bg-green-100 dark:bg-green-900 px-1 rounded">DEELNEMER</span>}
+                    </div>
+                    {/* Pijltje icoon */}
+                    <svg 
+                        className={`w-5 h-5 text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+
+            {/* Uitgeklapte Content */}
+            {isExpanded && (
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-black/20">
+                    {/* Details in het kort */}
+                    <div className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                        {!isRace && <p className="mb-1">⚡ Pace: {run.pace_min} - {run.pace_max} min/km</p>}
+                        <p>👤 Org: {isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</p>
+                        {run.description && <p className="italic mt-2 text-gray-500">"{run.description}"</p>}
+                    </div>
+
+                    {/* Actieknoppen voor beheerder */}
+                    {isOrganizer && !hasOtherParticipants && (
+                        <div className="flex gap-2 mb-4">
+                            <button onClick={() => router.push(`/runs/edit/${run.id}`)} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">Aanpassen</button>
+                            <button onClick={deleteRun} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">Verwijderen</button>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                        {/* Deelnemers */}
+                        <div className="flex flex-wrap gap-1">
+                            {participants.length > 0 ? participants.map((p) => (
+                                <span key={p.user_id} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+                                    {p.profiles?.full_name}
+                                </span>
+                            )) : <span className="text-xs text-gray-400">Nog geen lopers</span>}
+                        </div>
+
+                        {/* Actieknoppen Deelname */}
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <button 
+                                onClick={toggleParticipation}
+                                disabled={loading}
+                                className={`text-sm px-4 py-2 rounded-lg font-bold flex-1 sm:flex-none ${isJoined ? 'bg-red-100 text-red-600' : 'bg-black text-white dark:bg-white dark:text-black'}`}
+                            >
+                                {loading ? '...' : (isJoined ? 'Afmelden' : 'Meedoen')}
+                            </button>
+                            {isRace && run.external_link && (
+                                <a href={run.external_link} target="_blank" rel="noopener noreferrer" className="text-sm px-4 py-2 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-500">Info ↗</a>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+  }
+
+  // --- STANDAARD WEERGAVE (De 'oude' kaart) ---
   return (
     <div className={`${cardBorderClass} border-2 p-6 rounded-xl shadow-sm hover:shadow-md transition flex flex-col h-full relative group`}>
       {isRace && <div className="absolute -top-3 left-6 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm">🏆 WEDSTRIJD</div>}
@@ -94,12 +198,7 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
       </div>
       
       <div className="space-y-3 text-gray-600 dark:text-gray-300 mb-6 flex-grow border-t border-black/5 pt-4">
-        
-        {/* PACE: Alleen tonen als het GEEN wedstrijd is (!isRace) */}
-        {!isRace && (
-            <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>
-        )}
-
+        {!isRace && <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>}
         <p className="flex items-center gap-2 text-sm"><span className="text-lg">👤</span> <span>Org: <span className="font-semibold">{isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</span></span></p>
         {run.description && <p className="text-sm italic mt-2 text-gray-500 bg-white/50 p-3 rounded-lg">"{run.description}"</p>}
         
