@@ -20,14 +20,13 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      // We sturen geen link-opties mee, want we willen puur de code
     })
 
     if (error) {
       setMessage('Er ging iets mis: ' + error.message)
       setLoading(false)
     } else {
-      setStep('code') // Ga naar de volgende stap in het scherm
+      setStep('code') // Ga naar de volgende stap
       setLoading(false)
     }
   }
@@ -48,7 +47,6 @@ export default function LoginPage() {
       setMessage('Foute code of verlopen. Probeer het opnieuw.')
       setLoading(false)
     } else {
-      // Gelukt! Ga naar home (of profiel als het nieuw is)
       router.push('/')
       router.refresh()
     }
@@ -63,7 +61,7 @@ export default function LoginPage() {
         </h2>
         
         {step === 'email' ? (
-            // FORMULIER STAP 1: EMAIL
+            // STAP 1: EMAIL
             <form onSubmit={handleSendCode} className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Email adres</label>
@@ -85,13 +83,13 @@ export default function LoginPage() {
               </button>
             </form>
         ) : (
-            // FORMULIER STAP 2: CODE
+            // STAP 2: CODE (Aangepast naar max 8 tekens)
             <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
               <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded text-sm text-blue-800 dark:text-blue-200 mb-2">
                 We hebben een code gestuurd naar <strong>{email}</strong>.
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">6-cijferige code</label>
+                <label className="block text-sm font-medium mb-1">Jouw code</label>
                 <input
                   type="text"
                   required
@@ -99,7 +97,7 @@ export default function LoginPage() {
                   onChange={(e) => setCode(e.target.value)}
                   className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent text-center text-2xl tracking-widest font-mono"
                   placeholder="123456"
-                  maxLength={6}
+                  maxLength={8} // <--- HIER AANGEPAST NAAR 8
                 />
               </div>
               <button
