@@ -25,26 +25,21 @@ export default function CreateRunPage() {
   const [externalLink, setExternalLink] = useState('')
   const [selectedDistances, setSelectedDistances] = useState<number[]>([])
 
-  // NIEUW: We onthouden de gevonden provincie
-  const [detectedProvince, setDetectedProvince] = useState('')
-
-  async function validateAddress(cityInput: string, streetInput: string) {
+  // AANGEPAST: Deze functie geeft nu de provincie TERUG (string) of null
+  async function validateAddress(cityInput: string, streetInput: string): Promise<string | null> {
     try {
       const query = `${streetInput}, ${cityInput}`
-      // NIEUW: addressdetails=1 toegevoegd om de provincie te krijgen
       const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=nl,de&format=json&limit=1&addressdetails=1`)
       const data = await response.json()
       
       if (data && data.length > 0) {
-        // Haal de provincie (of 'state' in Duitsland) uit het resultaat
-        const prov = data[0].address.state || data[0].address.province || ''
-        setDetectedProvince(prov)
-        return true
+        // Haal provincie/staat op. Duitsland gebruikt 'state', NL vaak 'province' of 'state'.
+        return data[0].address.state || data[0].address.province || ''
       }
-      return false
+      return null
     } catch (e) {
       console.error(e)
-      return false
+      return null
     }
   }
 
@@ -64,9 +59,15 @@ export default function CreateRunPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Je moet ingelogd zijn.'); setLoading(false); return }
 
-    // Check adres én haal provincie op
-    const isValid = await validateAddress(city, street)
-    if (!isValid) { setError(`Adres niet gevonden (in NL of DE).`); setLoading(false); return }
+    // BUG FIX: We vangen de provincie hier direct op in een variabele
+    const foundProvince = await validateAddress(city, street)
+    
+    // Als foundProvince null is, bestaat het adres niet
+    if (foundProvince === null) { 
+        setError(`Adres niet gevonden (in NL of DE).`); 
+        setLoading(false); 
+        return 
+    }
 
     let finalDistanceKm = 0
     let finalRaceDistances = null
@@ -87,7 +88,7 @@ export default function CreateRunPage() {
       organizer_id: user.id,
       start_time: date,
       location: `${street}, ${city}`,
-      province: detectedProvince, // NIEUW: Sla de provincie op
+      province: foundProvince, // We gebruiken hier de variabele, niet de state!
       distance_km: finalDistanceKm, 
       race_distances: finalRaceDistances,
       pace_min: isRace ? null : paceMin,

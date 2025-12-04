@@ -14,17 +14,23 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
   const searchParams = useSearchParams()
   const highlightId = searchParams.get('run_id')
 
+  // Filter States
   const [filterLocation, setFilterLocation] = useState('')
-  const [filterProvince, setFilterProvince] = useState('') // NIEUW
+  const [filterProvince, setFilterProvince] = useState('') // Nu een select value
   const [filterMinDist, setFilterMinDist] = useState('')
   const [filterMaxDist, setFilterMaxDist] = useState('')
   const [filterStartDate, setFilterStartDate] = useState('')
   const [filterEndDate, setFilterEndDate] = useState('')
   
+  // Toggle States
   const [filterOnlyRaces, setFilterOnlyRaces] = useState(false)
   const [showHistorical, setShowHistorical] = useState(false)
   const [isCompactView, setIsCompactView] = useState(false)
   
+  // NIEUW: Bereken unieke provincies uit de data
+  // We pakken alle provincies, filteren de lege eruit, en maken ze uniek met Set
+  const uniqueProvinces = Array.from(new Set(runs.map(r => r.province).filter(Boolean))).sort()
+
   const filteredRuns = runs.filter(run => {
     if (run.id === highlightId) return true;
 
@@ -35,8 +41,8 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
     if (!showHistorical && runDateObj < now) return false
     if (filterLocation && !run.location.toLowerCase().includes(filterLocation.toLowerCase())) return false
     
-    // NIEUW: Provincie Filter (Check of provincie bestaat in de data)
-    if (filterProvince && (!run.province || !run.province.toLowerCase().includes(filterProvince.toLowerCase()))) return false
+    // AANGEPAST: Provincie filter is nu exact matchen (uit dropdown)
+    if (filterProvince && run.province !== filterProvince) return false
 
     if (filterMinDist && run.distance_km < parseFloat(filterMinDist)) return false
     if (filterMaxDist && run.distance_km > parseFloat(filterMaxDist)) return false
@@ -78,12 +84,22 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
       <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700 mb-8 max-w-6xl mx-auto">
         <h3 className="font-bold text-sm mb-3 uppercase tracking-wide text-gray-500">Vind een loopje</h3>
         
-        {/* We hebben nu 7 velden + checkboxes, dus grid iets aangepast */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 items-end">
           <div className="lg:col-span-1"><input type="text" placeholder="Plaats..." value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900" /></div>
           
-          {/* NIEUW: Provincie Input */}
-          <div className="lg:col-span-1"><input type="text" placeholder="Provincie/Regio" value={filterProvince} onChange={(e) => setFilterProvince(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900" /></div>
+          {/* NIEUW: Provincie Dropdown */}
+          <div className="lg:col-span-1">
+            <select 
+                value={filterProvince} 
+                onChange={(e) => setFilterProvince(e.target.value)} 
+                className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900"
+            >
+                <option value="">Alle provincies</option>
+                {uniqueProvinces.map((prov: any) => (
+                    <option key={prov} value={prov}>{prov}</option>
+                ))}
+            </select>
+          </div>
           
           <div><input type="date" value={filterStartDate} onChange={(e) => setFilterStartDate(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-500" /></div>
           <div><input type="date" value={filterEndDate} onChange={(e) => setFilterEndDate(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-500" /></div>
