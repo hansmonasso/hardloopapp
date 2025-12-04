@@ -62,7 +62,6 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
     })
   }
 
-  // NIEUW: Bepaal de stijl op basis van of het een wedstrijd is
   const isRace = run.is_race
   const cardBorderClass = isRace 
     ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10' 
@@ -71,14 +70,12 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
   return (
     <div className={`${cardBorderClass} border-2 p-6 rounded-xl shadow-sm hover:shadow-md transition flex flex-col h-full relative group`}>
       
-      {/* Label voor Wedstrijd */}
       {isRace && (
         <div className="absolute -top-3 left-6 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
             <span>🏆</span> WEDSTRIJD
         </div>
       )}
 
-      {/* Actieknoppen (Edit/Delete) */}
       {isOrganizer && !hasOtherParticipants && (
         <div className="absolute top-4 right-4 flex gap-2 z-10">
           <button onClick={() => router.push(`/runs/edit/${run.id}`)} className="text-gray-400 hover:text-blue-600 p-2 bg-white/80 rounded-full border shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></button>
@@ -86,29 +83,40 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
         </div>
       )}
 
-      {/* HEADER */}
       <div className="mb-2 pr-16 mt-2">
         <p className={`${isRace ? 'text-yellow-600 dark:text-yellow-400' : 'text-blue-600'} font-bold uppercase text-xs tracking-wide`}>
           {formatDatum(run.start_time)}
         </p>
       </div>
 
-      {/* TITEL & AFSTAND */}
+      {/* TITEL & AFSTAND LOGICA */}
       <div className="flex justify-between items-start mb-6">
-        <h3 className="text-xl font-bold pr-4 break-words w-2/3">{run.location}</h3>
+        <div className="pr-4 break-words w-2/3">
+            {/* Als er een titel is: Toon Titel GROOT, en locatie klein */}
+            {run.title ? (
+                <>
+                    <h3 className="text-xl font-bold leading-tight">{run.title}</h3>
+                    <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                        📍 {run.location}
+                    </p>
+                </>
+            ) : (
+                /* Geen titel? Dan gewoon de locatie groot */
+                <h3 className="text-xl font-bold">{run.location}</h3>
+            )}
+        </div>
+        
         <div className="text-right flex-shrink-0 bg-white dark:bg-black/20 px-3 py-2 rounded-lg border border-black/5">
             <span className="block text-3xl font-black leading-none">{run.distance_km}</span>
             <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">km</span>
         </div>
       </div>
       
-      {/* DETAILS */}
       <div className="space-y-3 text-gray-600 dark:text-gray-300 mb-6 flex-grow border-t border-black/5 pt-4">
         <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>
         <p className="flex items-center gap-2 text-sm"><span className="text-lg">👤</span> <span>Org: <span className="font-semibold">{isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</span></span></p>
         {run.description && <p className="text-sm italic mt-2 text-gray-500 bg-white/50 p-3 rounded-lg">"{run.description}"</p>}
         
-        {/* DEELNEMERS */}
         <div className="mt-2">
             <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Wie gaan er mee? ({participants.length})</p>
             {participants.length > 0 ? (
@@ -123,9 +131,7 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
         </div>
       </div>
 
-      {/* KNOPPEN */}
       <div className="flex flex-col gap-3">
-        {/* Knop 1: Deelname aan de groep */}
         <button 
             onClick={toggleParticipation}
             disabled={loading}
@@ -138,7 +144,6 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
             {loading ? 'Bezig...' : (isJoined ? 'Ik ga toch niet mee' : 'Ik ga mee!')}
         </button>
 
-        {/* Knop 2: Externe link (Alleen bij wedstrijd & als er een link is) */}
         {isRace && run.external_link && (
              <a 
                 href={run.external_link} 

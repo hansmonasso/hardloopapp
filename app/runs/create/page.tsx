@@ -18,8 +18,9 @@ export default function CreateRunPage() {
   const [paceMax, setPaceMax] = useState('')
   const [description, setDescription] = useState('')
 
-  // NIEUW: Wedstrijd velden
+  // Wedstrijd velden
   const [isRace, setIsRace] = useState(false)
+  const [title, setTitle] = useState('') // NIEUW
   const [externalLink, setExternalLink] = useState('')
 
   async function validateAddress(cityInput: string, streetInput: string) {
@@ -64,8 +65,9 @@ export default function CreateRunPage() {
       pace_min: paceMin,
       pace_max: paceMax,
       description: description,
-      is_race: isRace,           // NIEUW
-      external_link: externalLink // NIEUW
+      is_race: isRace,
+      title: isRace ? title : null, // NIEUW: Alleen opslaan als het een wedstrijd is
+      external_link: externalLink
     })
 
     if (insertError) {
@@ -84,7 +86,7 @@ export default function CreateRunPage() {
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
           
-          {/* NIEUW: Wedstrijd Switch */}
+          {/* Wedstrijd Switch */}
           <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <input 
               type="checkbox" 
@@ -98,17 +100,32 @@ export default function CreateRunPage() {
             </label>
           </div>
 
-          {/* NIEUW: Link veld (alleen zichtbaar als het een wedstrijd is) */}
+          {/* Wedstrijd Velden (Titel & Link) */}
           {isRace && (
-            <div className="animate-in fade-in slide-in-from-top-2">
-              <label className="block text-sm font-medium mb-1">Link naar inschrijving/info</label>
-              <input
-                type="url"
-                placeholder="https://www.zevenheuvelenloop.nl..."
-                value={externalLink}
-                onChange={(e) => setExternalLink(e.target.value)}
-                className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20"
-              />
+            <div className="animate-in fade-in slide-in-from-top-2 space-y-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-800/30">
+              
+              {/* NIEUW: Titel veld */}
+              <div>
+                <label className="block text-sm font-bold mb-1 text-yellow-800 dark:text-yellow-500">Naam evenement</label>
+                <input
+                    type="text"
+                    placeholder="Bijv. Zevenheuvelenloop"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-white dark:bg-black/20"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1 text-yellow-800 dark:text-yellow-500">Link naar inschrijving</label>
+                <input
+                    type="url"
+                    placeholder="https://..."
+                    value={externalLink}
+                    onChange={(e) => setExternalLink(e.target.value)}
+                    className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-white dark:bg-black/20"
+                />
+              </div>
             </div>
           )}
 
@@ -178,7 +195,7 @@ export default function CreateRunPage() {
             <label className="block text-sm font-medium mb-1">Extra info</label>
             <textarea
               rows={3}
-              placeholder="We verzamelen bij..."
+              placeholder="Verzamelen bij..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent"
