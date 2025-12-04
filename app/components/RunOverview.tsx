@@ -75,6 +75,13 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
          <Link href="/calculator" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
             <span>🧮</span> Calculator
          </Link>
+         <Link href="/calculator" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                <span>🧮</span> Calculator
+             </Link>
+             {/* NIEUW: Training Knop */}
+             <Link href="/training" className="bg-white border border-gray-300 text-black px-6 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                <span>📅</span> Schema's
+             </Link>
       </div>
 
       {/* FILTER BLOK (Voor iedereen zichtbaar) */}
