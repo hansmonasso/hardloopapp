@@ -8,12 +8,12 @@ interface RunCardProps {
   run: any
   currentUserId: string | undefined
   isCompactView?: boolean
-  isHighlighted?: boolean // NIEUW
+  isHighlighted?: boolean
 }
 
 export default function RunCard({ run, currentUserId, isCompactView = false, isHighlighted = false }: RunCardProps) {
   const router = useRouter()
-  const cardRef = useRef<HTMLDivElement>(null) // Voor scrollen
+  const cardRef = useRef<HTMLDivElement>(null)
   const [participants, setParticipants] = useState<any[]>([])
   const [isJoined, setIsJoined] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -24,12 +24,11 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   useEffect(() => {
     fetchParticipants()
     
-    // NIEUW: Als dit het gedeelde loopje is: scroll ernaartoe en klap open!
     if (isHighlighted) {
         setIsExpanded(true)
         setTimeout(() => {
             cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }, 500) // Korte vertraging om zeker te zijn dat alles geladen is
+        }, 500)
     }
   }, [isHighlighted])
 
@@ -44,7 +43,6 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   const hasOtherParticipants = participants.some(p => p.user_id !== run.organizer_id)
 
   async function toggleParticipation() {
-    // NIEUW: Als je niet bent ingelogd -> ga naar login pagina
     if (!currentUserId) {
         if(confirm('Om je aan te melden moet je even inloggen. Wil je naar de inlogpagina?')) {
             router.push('/login')
@@ -70,29 +68,15 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation() 
-    
-    // NIEUW: We gebruiken nu de schone /share/ link
     const shareUrl = `${window.location.origin}/share/${run.id}`
-    
-    const shareText = run.is_race 
-        ? `🏆 Doe mee met ${run.title || 'een wedstrijd'} in ${run.location}!`
-        : `🏃 Ren mee in ${run.location} op ${formatDatum(run.start_time)}!`;
+    const shareText = run.is_race ? `🏆 Doe mee met ${run.title}!` : `🏃 Ren mee in ${run.location}!`
 
     if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'Social Run',
-                text: shareText,
-                url: shareUrl
-            })
-        } catch (err) {
-            console.log('Share geannuleerd')
-        }
+        try { await navigator.share({ title: 'Social Run', text: shareText, url: shareUrl }) } catch (err) {}
     } else {
         navigator.clipboard.writeText(shareUrl)
-        alert('Link gekopieerd! Je kunt hem nu plakken.')
+        alert('Link gekopieerd!')
     }
-  }
   }
 
   const formatDatum = (datumString: string, short = false) => {
@@ -107,7 +91,6 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   const isRace = run.is_race
   
-  // Bepaal de stijl. Als highlighted: dikke blauwe rand!
   let cardBorderClass = isRace 
     ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10' 
     : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'
