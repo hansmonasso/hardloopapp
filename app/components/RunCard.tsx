@@ -59,8 +59,6 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
     ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10' 
     : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'
 
-  // NIEUW: Afstand weergave logica
-  // Als het een wedstrijd is én er zijn race_distances, vervang de komma's door slashes en de punten door komma's
   const distanceDisplay = (isRace && run.race_distances) 
     ? run.race_distances.replace(/,/g, ' /').replace(/\./g, ',')
     : run.distance_km.toString().replace('.', ',')
@@ -87,7 +85,6 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
             ) : <h3 className="text-xl font-bold">{run.location}</h3>}
         </div>
         
-        {/* De afstand weergave */}
         <div className="text-right flex-shrink-0 bg-white dark:bg-black/20 px-3 py-2 rounded-lg border border-black/5">
             <span className={`block font-black leading-none ${isRace ? 'text-xl' : 'text-3xl'}`}>
                 {distanceDisplay}
@@ -97,7 +94,12 @@ export default function RunCard({ run, currentUserId }: RunCardProps) {
       </div>
       
       <div className="space-y-3 text-gray-600 dark:text-gray-300 mb-6 flex-grow border-t border-black/5 pt-4">
-        <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>
+        
+        {/* PACE: Alleen tonen als het GEEN wedstrijd is (!isRace) */}
+        {!isRace && (
+            <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>
+        )}
+
         <p className="flex items-center gap-2 text-sm"><span className="text-lg">👤</span> <span>Org: <span className="font-semibold">{isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</span></span></p>
         {run.description && <p className="text-sm italic mt-2 text-gray-500 bg-white/50 p-3 rounded-lg">"{run.description}"</p>}
         

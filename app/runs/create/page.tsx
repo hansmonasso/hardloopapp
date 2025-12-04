@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
 
-// De vaste afstanden die je wilde
 const STANDARD_DISTANCES = [5, 10, 15, 21.1, 25, 30, 42.2]
 
 export default function CreateRunPage() {
@@ -16,16 +15,15 @@ export default function CreateRunPage() {
   const [city, setCity] = useState('')
   const [street, setStreet] = useState('')
   
-  const [distance, setDistance] = useState('') // Voor gewone loopjes
+  const [distance, setDistance] = useState('') 
   const [paceMin, setPaceMin] = useState('')
   const [paceMax, setPaceMax] = useState('')
   const [description, setDescription] = useState('')
 
-  // Wedstrijd velden
   const [isRace, setIsRace] = useState(false)
   const [title, setTitle] = useState('')
   const [externalLink, setExternalLink] = useState('')
-  const [selectedDistances, setSelectedDistances] = useState<number[]>([]) // NIEUW
+  const [selectedDistances, setSelectedDistances] = useState<number[]>([])
 
   async function validateAddress(cityInput: string, streetInput: string) {
     try {
@@ -39,7 +37,6 @@ export default function CreateRunPage() {
     }
   }
 
-  // Helper om afstanden aan/uit te vinken
   const toggleDistance = (dist: number) => {
     if (selectedDistances.includes(dist)) {
       setSelectedDistances(selectedDistances.filter(d => d !== dist))
@@ -59,7 +56,6 @@ export default function CreateRunPage() {
     const isValid = await validateAddress(city, street)
     if (!isValid) { setError(`Adres niet gevonden.`); setLoading(false); return }
 
-    // Logica voor afstand opslaan
     let finalDistanceKm = 0
     let finalRaceDistances = null
 
@@ -69,9 +65,7 @@ export default function CreateRunPage() {
             setLoading(false)
             return
         }
-        // We slaan de kleinste afstand op in de 'hoofd' kolom voor het filteren
         finalDistanceKm = selectedDistances[0]
-        // We slaan de lijst op als tekst: "5, 10, 21.1"
         finalRaceDistances = selectedDistances.join(', ')
     } else {
         finalDistanceKm = parseFloat(distance)
@@ -82,9 +76,9 @@ export default function CreateRunPage() {
       start_time: date,
       location: `${street}, ${city}`,
       distance_km: finalDistanceKm, 
-      race_distances: finalRaceDistances, // NIEUW
-      pace_min: paceMin,
-      pace_max: paceMax,
+      race_distances: finalRaceDistances,
+      pace_min: isRace ? null : paceMin, // Geen pace bij wedstrijd
+      pace_max: isRace ? null : paceMax, // Geen pace bij wedstrijd
       description: description,
       is_race: isRace,
       title: isRace ? title : null,
@@ -107,7 +101,6 @@ export default function CreateRunPage() {
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
           
-          {/* Wedstrijd Switch */}
           <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <input 
               type="checkbox" id="raceToggle" checked={isRace}
@@ -119,7 +112,6 @@ export default function CreateRunPage() {
             </label>
           </div>
 
-          {/* Wedstrijd Velden */}
           {isRace && (
             <div className="animate-in fade-in slide-in-from-top-2 space-y-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-800/30">
               <div>
@@ -127,7 +119,6 @@ export default function CreateRunPage() {
                 <input type="text" placeholder="Bijv. Zevenheuvelenloop" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700 bg-white dark:bg-black/20" />
               </div>
               
-              {/* NIEUW: Checkboxes voor afstanden */}
               <div>
                 <label className="block text-sm font-bold mb-2 text-yellow-800 dark:text-yellow-500">Kies afstanden (meerdere mogelijk)</label>
                 <div className="grid grid-cols-4 gap-2">
@@ -172,24 +163,26 @@ export default function CreateRunPage() {
             </div>
           </div>
 
-          {/* Afstand invoer: ALLEEN tonen als het GEEN wedstrijd is */}
           {!isRace && (
+            <>
               <div>
                 <label className="block text-sm font-medium mb-1">Afstand (km)</label>
                 <input type="number" step="0.1" required={!isRace} placeholder="5.0" value={distance} onChange={(e) => setDistance(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
               </div>
-          )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Pace van</label>
-              <input type="text" placeholder="5:00" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Pace tot</label>
-              <input type="text" placeholder="5:30" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
-            </div>
-          </div>
+              {/* PACE: Alleen tonen als GEEN wedstrijd */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Pace van</label>
+                  <input type="text" placeholder="5:00" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Pace tot</label>
+                  <input type="text" placeholder="5:30" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent" />
+                </div>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-1">Extra info</label>

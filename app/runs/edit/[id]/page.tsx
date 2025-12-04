@@ -52,16 +52,14 @@ export default function EditRunPage() {
     setDate(localIso)
     setLocation(run.location)
     setDistance(run.distance_km)
-    setPaceMin(run.pace_min)
-    setPaceMax(run.pace_max)
+    setPaceMin(run.pace_min || '')
+    setPaceMax(run.pace_max || '')
     setDescription(run.description || '')
     setIsRace(run.is_race || false)
     setTitle(run.title || '')
     setExternalLink(run.external_link || '')
     
-    // Laad afstanden in
     if (run.race_distances) {
-        // String "5, 10" omzetten naar array [5, 10]
         const dists = run.race_distances.split(',').map((d:string) => parseFloat(d))
         setSelectedDistances(dists)
     }
@@ -103,9 +101,9 @@ export default function EditRunPage() {
         start_time: date,
         location: location,
         distance_km: finalDistanceKm,
-        race_distances: finalRaceDistances, // NIEUW
-        pace_min: paceMin,
-        pace_max: paceMax,
+        race_distances: finalRaceDistances,
+        pace_min: isRace ? null : paceMin,
+        pace_max: isRace ? null : paceMax,
         description: description,
         is_race: isRace,
         title: isRace ? title : null,
@@ -168,16 +166,18 @@ export default function EditRunPage() {
           </div>
 
           {!isRace && (
-             <div>
-                <label className="block text-sm font-medium mb-1">Afstand (km)</label>
-                <input type="number" step="0.1" value={distance} onChange={(e) => setDistance(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" />
-            </div>
+            <>
+                <div>
+                    <label className="block text-sm font-medium mb-1">Afstand (km)</label>
+                    <input type="number" step="0.1" value={distance} onChange={(e) => setDistance(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div><label className="block text-sm font-medium mb-1">Pace van</label><input type="text" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
+                    <div><label className="block text-sm font-medium mb-1">Pace tot</label><input type="text" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
+                </div>
+            </>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium mb-1">Pace van</label><input type="text" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
-            <div><label className="block text-sm font-medium mb-1">Pace tot</label><input type="text" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
-          </div>
           <div><label className="block text-sm font-medium mb-1">Extra info</label><textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="flex gap-4 mt-2">
