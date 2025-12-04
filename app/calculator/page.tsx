@@ -6,10 +6,14 @@ import Link from 'next/link'
 export default function CalculatorPage() {
   const [birthYear, setBirthYear] = useState('')
   const [weight, setWeight] = useState('')
-  const [restingHR, setRestingHR] = useState('') // NIEUW: Rusthartslag
   const [gender, setGender] = useState('man')
   const [min5k, setMin5k] = useState('')
   const [sec5k, setSec5k] = useState('')
+  
+  // Hartslag inputs
+  const [restingHR, setRestingHR] = useState('') 
+  const [maxHRInput, setMaxHRInput] = useState('') // NIEUW: Max HR input
+
   const [results, setResults] = useState<any>(null)
 
   const TARGET_DISTANCES = [10, 15, 21.1, 25, 30, 42.195]
@@ -18,8 +22,10 @@ export default function CalculatorPage() {
     const hrs = Math.floor(totalSeconds / 3600)
     const mins = Math.floor((totalSeconds % 3600) / 60)
     const secs = Math.floor(totalSeconds % 60)
+    
     const m = mins.toString().padStart(2, '0')
     const s = secs.toString().padStart(2, '0')
+    
     if (hrs > 0) return `${hrs}:${m}:${s}`
     return `${mins}:${s}`
   }
@@ -52,7 +58,11 @@ export default function CalculatorPage() {
     
     const currentWeight = parseFloat(weight)
     const age = new Date().getFullYear() - parseInt(birthYear)
-    const rhr = restingHR ? parseInt(restingHR) : null // Rusthartslag
+    
+    // Hartslag logica
+    const rhr = restingHR ? parseInt(restingHR) : null 
+    // Als maxHR is ingevuld, gebruik die. Anders 220 - leeftijd.
+    const maxHR = maxHRInput ? parseInt(maxHRInput) : (220 - age)
 
     // 1. Race Voorspellingen
     const predictions = TARGET_DISTANCES.map(dist => {
@@ -99,8 +109,7 @@ export default function CalculatorPage() {
     const potentialHM = predictTime(potential5k, 21.1)
     const potentialM = predictTime(potential5k, 42.195)
 
-    // 5. NIEUW: Hartslag Zones
-    const maxHR = 220 - age
+    // 5. Hartslag Zones
     const zoneDefinitions = [
         { name: 'Z1 (Herstel)', minPct: 0.50, maxPct: 0.60, desc: 'Warming up, cooling down' },
         { name: 'Z2 (Duur)', minPct: 0.60, maxPct: 0.70, desc: 'Rustig, vetverbranding' },
@@ -178,18 +187,30 @@ export default function CalculatorPage() {
                         </div>
                     </div>
 
-                    {/* NIEUW: Rusthartslag Input */}
-                    <div>
-                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Rusthartslag (Optioneel)</label>
-                        <input 
-                            type="number" 
-                            placeholder="Bijv. 55 (Leeg laten = Standaard)" 
-                            value={restingHR} 
-                            onChange={(e) => setRestingHR(e.target.value)} 
-                            className="w-full p-2 rounded border bg-transparent" 
-                        />
-                        <p className="text-[10px] text-gray-400 mt-1">Nodig voor Karvonen formule</p>
+                    {/* HARTSLAG INPUTS */}
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100 dark:border-gray-800">
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Rust Hartslag</label>
+                            <input 
+                                type="number" 
+                                placeholder="Optioneel" 
+                                value={restingHR} 
+                                onChange={(e) => setRestingHR(e.target.value)} 
+                                className="w-full p-2 rounded border bg-transparent text-sm" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Max Hartslag</label>
+                            <input 
+                                type="number" 
+                                placeholder="Optioneel" 
+                                value={maxHRInput} 
+                                onChange={(e) => setMaxHRInput(e.target.value)} 
+                                className="w-full p-2 rounded border bg-transparent text-sm" 
+                            />
+                        </div>
                     </div>
+                    <p className="text-[10px] text-gray-400 -mt-2">Leeg? Dan schatten we het.</p>
 
                     <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Jouw snelste 5 km</label>
@@ -224,7 +245,7 @@ export default function CalculatorPage() {
                             <div className="text-5xl font-black tracking-tighter">{results.vo2max}</div>
                         </div>
 
-                        {/* NIEUW: HARTSLAG ZONES */}
+                        {/* HARTSLAG ZONES */}
                         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                             <div className="bg-red-50 dark:bg-red-900/20 p-3 border-b border-red-100 dark:border-red-800 flex justify-between items-center">
                                 <h3 className="font-bold text-red-800 dark:text-red-200">❤️ Trainingszones</h3>
@@ -277,7 +298,7 @@ export default function CalculatorPage() {
                             </table>
                         </div>
 
-                        {/* TABEL 2: GEWICHT (NU PER KILO) */}
+                        {/* TABEL 2: GEWICHT */}
                         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                             <div className="bg-gray-50 dark:bg-gray-800/50 p-3 border-b border-gray-100 dark:border-gray-800">
                                 <h3 className="font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">⚖️ Effect van Gewicht</h3>
@@ -310,7 +331,7 @@ export default function CalculatorPage() {
                             </div>
                         </div>
 
-                        {/* TABEL 3: LEEFTIJD (UITGEBREID) */}
+                        {/* TABEL 3: LEEFTIJD */}
                         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
                             <h3 className="font-bold mb-4 flex items-center gap-2">🎂 Leeftijdspotentieel</h3>
                             {results.ageAnalysis.isPastPeak ? (
