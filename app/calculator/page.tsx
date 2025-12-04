@@ -6,6 +6,7 @@ import Link from 'next/link'
 export default function CalculatorPage() {
   const [birthYear, setBirthYear] = useState('')
   const [weight, setWeight] = useState('')
+  const [restingHR, setRestingHR] = useState('') // NIEUW: Rusthartslag
   const [gender, setGender] = useState('man')
   const [min5k, setMin5k] = useState('')
   const [sec5k, setSec5k] = useState('')
@@ -17,10 +18,8 @@ export default function CalculatorPage() {
     const hrs = Math.floor(totalSeconds / 3600)
     const mins = Math.floor((totalSeconds % 3600) / 60)
     const secs = Math.floor(totalSeconds % 60)
-    
     const m = mins.toString().padStart(2, '0')
     const s = secs.toString().padStart(2, '0')
-    
     if (hrs > 0) return `${hrs}:${m}:${s}`
     return `${mins}:${s}`
   }
@@ -32,18 +31,14 @@ export default function CalculatorPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Riegel Formule
   const predictTime = (seconds5k: number, dist: number) => {
     return seconds5k * Math.pow((dist / 5), 1.06)
   }
 
-  // Daniels/Gilbert Formule voor VO2max schatting
   const calculateVO2Max = (seconds5k: number) => {
     if (seconds5k === 0) return 0
     const minutes = seconds5k / 60
-    const velocity = 5000 / minutes // meters per minuut
-    
-    // De complexe formule van Daniels & Gilbert
+    const velocity = 5000 / minutes 
     const vo2 = (-4.60 + 0.182258 * velocity + 0.000104 * velocity * velocity) / 
                 (0.8 + 0.1894393 * Math.exp(-0.012778 * minutes) + 0.2989558 * Math.exp(-0.1932605 * minutes))
     return Math.round(vo2 * 10) / 10 
@@ -57,6 +52,7 @@ export default function CalculatorPage() {
     
     const currentWeight = parseFloat(weight)
     const age = new Date().getFullYear() - parseInt(birthYear)
+    const rhr = restingHR ? parseInt(restingHR) : null // Rusthartslag
 
     // 1. Race Voorspellingen
     const predictions = TARGET_DISTANCES.map(dist => {
@@ -71,18 +67,15 @@ export default function CalculatorPage() {
     // 2. VO2 Max
     const vo2max = calculateVO2Max(totalSeconds5k)
 
-    // 3. Gewicht Analyse (-5 tot +5 kg) - NU PER KILO
+    // 3. Gewicht Analyse
     const weightRows = []
     for (let change = -5; change <= 5; change++) {
         if (change === 0) continue; 
-
         const newWeight = currentWeight + change
         const factor = Math.pow(newWeight / currentWeight, 0.732)
-        
         const new5k = totalSeconds5k * factor
         const newHM = predictTime(new5k, 21.1)
         const newM = predictTime(new5k, 42.195)
-
         const curHM = predictTime(totalSeconds5k, 21.1)
         const curM = predictTime(totalSeconds5k, 42.195)
 
@@ -102,10 +95,34 @@ export default function CalculatorPage() {
         const yearsPastPeak = age - 28
         ageFactor = 1 + (yearsPastPeak * 0.006) 
     }
-
     const potential5k = totalSeconds5k / ageFactor
     const potentialHM = predictTime(potential5k, 21.1)
     const potentialM = predictTime(potential5k, 42.195)
+
+    // 5. NIEUW: Hartslag Zones
+    const maxHR = 220 - age
+    const zoneDefinitions = [
+        { name: 'Z1 (Herstel)', minPct: 0.50, maxPct: 0.60, desc: 'Warming up, cooling down' },
+        { name: 'Z2 (Duur)', minPct: 0.60, maxPct: 0.70, desc: 'Rustig, vetverbranding' },
+        { name: 'Z3 (Aerobe)', minPct: 0.70, maxPct: 0.80, desc: 'Gemiddeld, werken aan conditie' },
+        { name: 'Z4 (Drempel)', minPct: 0.80, maxPct: 0.90, desc: 'Zwaar, anaeroob drempel' },
+        { name: 'Z5 (Maximaal)', minPct: 0.90, maxPct: 1.00, desc: 'Sprint, intervallen, uitputting' },
+    ]
+
+    const trainingZones = zoneDefinitions.map(z => {
+        let minBPM, maxBPM
+        if (rhr) {
+            // Karvonen Formule: ((Max - Rust) * %) + Rust
+            const reserve = maxHR - rhr
+            minBPM = Math.round((reserve * z.minPct) + rhr)
+            maxBPM = Math.round((reserve * z.maxPct) + rhr)
+        } else {
+            // Standaard Formule: Max * %
+            minBPM = Math.round(maxHR * z.minPct)
+            maxBPM = Math.round(maxHR * z.maxPct)
+        }
+        return { ...z, range: `${minBPM} - ${maxBPM}` }
+    })
 
     setResults({
         predictions,
@@ -117,6 +134,11 @@ export default function CalculatorPage() {
             potentialHM: formatTime(potentialHM),
             potentialM: formatTime(potentialM),
             isPastPeak: age > 28
+        },
+        heartRate: {
+            maxHR,
+            rhr,
+            zones: trainingZones
         }
     })
   }
@@ -156,6 +178,19 @@ export default function CalculatorPage() {
                         </div>
                     </div>
 
+                    {/* NIEUW: Rusthartslag Input */}
+                    <div>
+                        <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Rusthartslag (Optioneel)</label>
+                        <input 
+                            type="number" 
+                            placeholder="Bijv. 55 (Leeg laten = Standaard)" 
+                            value={restingHR} 
+                            onChange={(e) => setRestingHR(e.target.value)} 
+                            className="w-full p-2 rounded border bg-transparent" 
+                        />
+                        <p className="text-[10px] text-gray-400 mt-1">Nodig voor Karvonen formule</p>
+                    </div>
+
                     <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
                         <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Jouw snelste 5 km</label>
                         <div className="flex gap-2 items-center">
@@ -187,6 +222,34 @@ export default function CalculatorPage() {
                                 <p className="text-sm opacity-75">Gebaseerd op je 5km tijd</p>
                             </div>
                             <div className="text-5xl font-black tracking-tighter">{results.vo2max}</div>
+                        </div>
+
+                        {/* NIEUW: HARTSLAG ZONES */}
+                        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                            <div className="bg-red-50 dark:bg-red-900/20 p-3 border-b border-red-100 dark:border-red-800 flex justify-between items-center">
+                                <h3 className="font-bold text-red-800 dark:text-red-200">❤️ Trainingszones</h3>
+                                <span className="text-xs text-red-600 dark:text-red-300 font-mono">
+                                    Max HR: {results.heartRate.maxHR} {results.heartRate.rhr ? `(Rust: ${results.heartRate.rhr})` : ''}
+                                </span>
+                            </div>
+                            <table className="w-full text-sm text-left">
+                                <thead className="text-gray-500 uppercase text-xs border-b dark:border-gray-800">
+                                    <tr>
+                                        <th className="px-4 py-2">Zone</th>
+                                        <th className="px-4 py-2">Hartslag (bpm)</th>
+                                        <th className="px-4 py-2 hidden sm:table-cell">Omschrijving</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                                    {results.heartRate.zones.map((zone: any) => (
+                                        <tr key={zone.name} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                            <td className="px-4 py-2 font-bold">{zone.name}</td>
+                                            <td className="px-4 py-2 font-mono font-bold text-red-600 dark:text-red-400">{zone.range}</td>
+                                            <td className="px-4 py-2 text-gray-500 hidden sm:table-cell">{zone.desc}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
                         {/* TABEL 1: PROGNOSES */}
