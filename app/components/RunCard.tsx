@@ -20,7 +20,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   const [isJoined, setIsJoined] = useState(false)
   const [loading, setLoading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false) // Nodig voor de modal
+  const [showLoginModal, setShowLoginModal] = useState(false) // FIX: Variabele is hier gedefinieerd
 
   const isOrganizer = currentUserId === run.organizer_id
 
@@ -47,6 +47,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   async function toggleParticipation() {
     if (!currentUserId) {
+        // Gebruikt de lokale state die nu bestaat
         setShowLoginModal(true)
         return
     }
