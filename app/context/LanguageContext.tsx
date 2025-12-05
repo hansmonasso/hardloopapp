@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// 1. HIER STAAN DIRECT DE VERTALINGEN (Geen los bestand meer nodig)
+// --- DEEL 1: DE VERTALINGEN (Alles is hier) ---
 export type Language = 'nl' | 'en' | 'de';
 
 export const translations = {
@@ -13,6 +13,7 @@ export const translations = {
     nav_schema: "Schema's",
     nav_info: "Info",
     login_btn: "Inloggen / Registreren",
+    
     filter_title: "Vind een loopje",
     filter_placeholder_city: "Plaats...",
     filter_placeholder_prov: "Provincie/Regio",
@@ -21,9 +22,11 @@ export const translations = {
     filter_compact: "Compacte lijst",
     filter_reset: "Filters wissen",
     filter_all_provinces: "Alle provincies",
+    
     list_header_future: "Aankomende Loopjes",
     list_header_history: "Alle Loopjes",
     list_empty: "Geen loopjes gevonden.",
+    
     card_join: "Ik ga mee!",
     card_leave: "Ik ga toch niet mee",
     card_participants: "Wie gaan er mee?",
@@ -33,6 +36,8 @@ export const translations = {
     card_participant_label: "DEELNEMER",
     card_edit: "Aanpassen",
     card_delete: "Verwijderen",
+    card_join_login_prompt: "Om je aan te melden moet je even inloggen. Wil je naar de inlogpagina?",
+    
     race_badge: "WEDSTRIJD",
     race_info_btn: "Inschrijven / Info",
   },
@@ -43,6 +48,7 @@ export const translations = {
     nav_schema: "Plans",
     nav_info: "Info",
     login_btn: "Login / Register",
+    
     filter_title: "Find a run",
     filter_placeholder_city: "City...",
     filter_placeholder_prov: "Region/State",
@@ -51,9 +57,11 @@ export const translations = {
     filter_compact: "Compact View",
     filter_reset: "Clear filters",
     filter_all_provinces: "All regions",
+    
     list_header_future: "Upcoming Runs",
     list_header_history: "All Runs",
     list_empty: "No runs found.",
+    
     card_join: "I'm joining!",
     card_leave: "I'm out",
     card_participants: "Who's joining?",
@@ -63,6 +71,8 @@ export const translations = {
     card_participant_label: "JOINED",
     card_edit: "Edit",
     card_delete: "Delete",
+    card_join_login_prompt: "You need to log in to join this run. Go to the login page?",
+
     race_badge: "RACE",
     race_info_btn: "Register / Info",
   },
@@ -73,6 +83,7 @@ export const translations = {
     nav_schema: "Pläne",
     nav_info: "Info",
     login_btn: "Anmelden / Registrieren",
+    
     filter_title: "Lauf finden",
     filter_placeholder_city: "Stadt...",
     filter_placeholder_prov: "Bundesland",
@@ -81,9 +92,11 @@ export const translations = {
     filter_compact: "Kompaktansicht",
     filter_reset: "Filter löschen",
     filter_all_provinces: "Alle Regionen",
+    
     list_header_future: "Kommende Läufe",
     list_header_history: "Alle Läufe",
     list_empty: "Keine Läufe gefunden.",
+    
     card_join: "Ich bin dabei!",
     card_leave: "Ich bin raus",
     card_participants: "Wer läuft mit?",
@@ -93,12 +106,15 @@ export const translations = {
     card_participant_label: "TEILNEHMER",
     card_edit: "Bearbeiten",
     card_delete: "Löschen",
+    card_join_login_prompt: "Sie müssen sich anmelden, um teilzunehmen. Möchten Sie zur Anmeldeseite gehen?",
+    
     race_badge: "WETTKAMPF",
     race_info_btn: "Anmeldung / Info",
   }
 };
 
-// 2. DE LOGICA
+// --- DEEL 2: DE LOGICA ---
+
 interface LanguageContextType {
   lang: Language;
   setLang: (lang: Language) => void;
