@@ -20,7 +20,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   const [isJoined, setIsJoined] = useState(false)
   const [loading, setLoading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false) // FIX: State is nu in de component
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const isOrganizer = currentUserId === run.organizer_id
 
@@ -47,7 +47,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   async function toggleParticipation() {
     if (!currentUserId) {
-        // FIX: Gebruikt de modale pop-up in plaats van de foute browser-confirm
+        // FIX: Gebruikt de modale pop-up
         setShowLoginModal(true)
         return
     }
@@ -94,7 +94,6 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   const isRace = run.is_race
   const isWomenOnly = run.women_only
   
-  // Kleuren voor de kaart
   let cardBorderClass = isRace 
     ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10' 
     : isWomenOnly 
@@ -109,7 +108,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
     ? run.race_distances.replace(/,/g, ' /').replace(/\./g, ',')
     : run.distance_km.toString().replace('.', ',')
 
-  // MODAL COMPONENT (Binnen de RunCard zodat t, lang, router en setShowLoginModal beschikbaar zijn)
+  // MODAL COMPONENT (Binnen de RunCard)
   const LoginModal = () => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl max-w-sm w-full text-center border border-gray-200 dark:border-gray-800">
