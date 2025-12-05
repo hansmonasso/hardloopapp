@@ -1,24 +1,38 @@
+'use client'
+
 import Link from 'next/link'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function AboutPage() {
+  const { t, lang } = useLanguage()
+
+  // Vertaalhulp voor specifieke teksten
+  const trans = (nl: string, en: string, de: string) => {
+      if (lang === 'en') return en;
+      if (lang === 'de') return de;
+      return nl;
+  }
+
   return (
     <div className="min-h-screen p-8 flex flex-col items-center">
       <div className="max-w-3xl w-full">
         
         {/* Header */}
         <div className="flex justify-between items-center mb-10">
-            <h1 className="text-3xl font-bold">ℹ️ Over Social Run</h1>
-            <Link href="/" className="text-sm underline text-gray-500 hover:text-black dark:hover:text-white">Terug naar home</Link>
+            <h1 className="text-3xl font-bold">ℹ️ {t.nav_info}</h1>
+            <Link href="/" className="text-sm underline text-gray-500 hover:text-black dark:hover:text-white">{trans('Terug naar home', 'Back to home', 'Zurück zur Startseite')}</Link>
         </div>
 
         {/* Intro */}
         <div className="text-center mb-12">
             <h2 className="text-4xl font-black mb-4 leading-tight">
-                Samen hardlopen.<br/>
-                <span className="text-blue-600">Zonder gedoe.</span>
+                {trans('Samen hardlopen.', 'Running together.', 'Gemeinsam laufen.')}<br/>
+                <span className="text-blue-600">{trans('Zonder gedoe.', 'Without hassle.', 'Ohne Stress.')}</span>
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto">
-                Weg met de rommelige lijstjes in WhatsApp. Social Run is de simpelste manier om je loopje te plannen, te delen en lopers te verzamelen.
+                {trans('Weg met de rommelige lijstjes in WhatsApp. Social Run is de simpelste manier om je loopje te plannen, te delen en lopers te verzamelen.', 
+                       'Get rid of the messy lists in WhatsApp. Social Run is the simplest way to plan, share your run, and gather runners.', 
+                       'Schluss mit unübersichtlichen WhatsApp-Listen. Social Run ist der einfachste Weg, Ihren Lauf zu planen, zu teilen und Läufer zu sammeln.')}
             </p>
         </div>
 
@@ -28,70 +42,76 @@ export default function AboutPage() {
             {/* Stap 1 */}
             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition text-center">
                 <div className="text-5xl mb-4">🗓️</div>
-                <h3 className="font-bold text-xl mb-2">1. Plan je loopje</h3>
+                <h3 className="font-bold text-xl mb-2">{trans('1. Plan je loopje', '1. Plan your run', '1. Planen Sie Ihren Lauf')}</h3>
                 <p className="text-sm text-gray-500">
-                    Prik een datum, kies een locatie en geef aan wat je gaat doen. Een rustige 5km of een pittige interval? Jij bent de baas.
+                    {trans('Prik een datum, kies een locatie en geef aan wat je gaat doen. Een rustige 5km of een pittige interval? Jij bent de baas.', 
+                           'Pick a date, choose a location, and specify your activity. A quiet 5k or a tough interval? You are the boss.',
+                           'Wählen Sie ein Datum, einen Ort und geben Sie Ihre Aktivität an. Ein ruhiger 5er oder ein hartes Intervall? Sie entscheiden.')}
                 </p>
             </div>
 
             {/* Stap 2 */}
             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition text-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg">POPULAIR</div>
+                <div className="absolute top-0 right-0 bg-yellow-400 text-black text-[10px] font-bold px-2 py-1 rounded-bl-lg">{trans('POPULAIR', 'POPULAR', 'BELIEBT')}</div>
                 <div className="text-5xl mb-4">📲</div>
-                <h3 className="font-bold text-xl mb-2">2. Deel op Socials</h3>
+                <h3 className="font-bold text-xl mb-2">{trans('2. Deel op Socials', '2. Share on Socials', '2. Auf Social Media teilen')}</h3>
                 <p className="text-sm text-gray-500">
-                    Klaar? Deel je loopje direct via WhatsApp, Instagram of X. Vrienden zien meteen waar en wanneer ze moeten staan.
+                    {trans('Klaar? Deel je loopje direct via WhatsApp, Instagram of X. Vrienden zien meteen waar en wanneer ze moeten staan.', 
+                           'Done? Share your run directly via WhatsApp, Instagram, or X. Friends immediately see where and when to meet.',
+                           'Fertig? Teilen Sie Ihren Lauf direkt über WhatsApp, Instagram oder X. Freunde sehen sofort, wo und wann sie sich treffen.')}
                 </p>
             </div>
 
             {/* Stap 3 */}
             <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition text-center">
                 <div className="text-5xl mb-4">👟</div>
-                <h3 className="font-bold text-xl mb-2">3. Loop samen</h3>
+                <h3 className="font-bold text-xl mb-2">{trans('3. Loop samen', '3. Run together', '3. Gemeinsam laufen')}</h3>
                 <p className="text-sm text-gray-500">
-                    Andere lopers melden zich met één klik aan. Jij ziet precies wie er komt opdagen. Geen verrassingen bij de start.
+                    {trans('Andere lopers melden zich met één klik aan. Jij ziet precies wie er komt opdagen. Geen verrassingen bij de start.', 
+                           'Other runners sign up with one click. You see exactly who is showing up. No surprises at the start.',
+                           'Andere Läufer melden sich mit einem Klick an. Sie sehen genau, wer kommt. Keine Überraschungen beim Start.')}
                 </p>
             </div>
         </div>
 
         {/* Feature Highlights */}
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-3xl p-8 md:p-12 mb-12">
-            <h3 className="text-2xl font-bold mb-6 text-center text-blue-900 dark:text-blue-100">Waarom Social Run?</h3>
+            <h3 className="text-2xl font-bold mb-6 text-center text-blue-900 dark:text-blue-100">{trans('Waarom Social Run?', 'Why Social Run?', 'Warum Social Run?')}</h3>
             <ul className="space-y-4 max-w-lg mx-auto">
                 <li className="flex items-center gap-3">
                     <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">Geen account nodig om te kijken</span>
+                    <span className="text-gray-700 dark:text-gray-300">{trans('Geen account nodig om te kijken', 'No account needed to browse', 'Kein Konto zum Stöbern erforderlich')}</span>
                 </li>
                 <li className="flex items-center gap-3">
                     <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">Handige race-calculator & trainingsschema's</span>
+                    <span className="text-gray-700 dark:text-gray-300">{trans('Handige race-calculator & trainingsschema\'s', 'Handy race calculator & training plans', 'Nützlicher Rennrechner & Trainingspläne')}</span>
                 </li>
                 <li className="flex items-center gap-3">
                     <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">Altijd gratis voor de community</span>
+                    <span className="text-gray-700 dark:text-gray-300">{trans('Altijd gratis voor de community', 'Always free for the community', 'Immer kostenlos für die Community')}</span>
                 </li>
                 <li className="flex items-center gap-3">
                     <span className="bg-blue-200 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">✓</span>
-                    <span className="text-gray-700 dark:text-gray-300">Powered by <strong>Team Monasso</strong></span>
+                    <span className="text-gray-700 dark:text-gray-300">{trans('Powered by', 'Powered by', 'Unterstützt von')} <strong>Team Monasso</strong></span>
                 </li>
             </ul>
         </div>
 
         {/* Call to Action */}
         <div className="text-center">
-            <p className="text-gray-500 mb-6 font-medium">Klaar om te starten?</p>
+            <p className="text-gray-500 mb-6 font-medium">{trans('Klaar om te starten?', 'Ready to start?', 'Bereit zum Start?')}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link 
                     href="/login" 
                     className="bg-black text-white dark:bg-white dark:text-black px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition shadow-lg"
                 >
-                    Maak een account
+                    {trans('Maak een account', 'Create an account', 'Konto erstellen')}
                 </Link>
                 <Link 
                     href="/" 
                     className="bg-white border border-gray-300 text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-50 transition"
                 >
-                    Bekijk loopjes
+                    {trans('Bekijk loopjes', 'View runs', 'Läufe ansehen')}
                 </Link>
             </div>
         </div>

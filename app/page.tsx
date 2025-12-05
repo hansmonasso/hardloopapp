@@ -18,14 +18,15 @@ export default async function Home() {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  // Haal alle loopjes op, inclusief de naam van de organisator
   const { data: runs } = await supabase
     .from('runs')
     .select('*, organizer:profiles(full_name)')
     .order('start_time', { ascending: true })
 
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center font-sans">
-      <main className="flex flex-col gap-8 items-center text-center w-full max-w-5xl">
+    // Let op: GEEN <body> of <html> tags hier.
+    <main className="flex flex-col gap-8 items-center text-center w-full max-w-5xl mx-auto pt-8 pb-16">
         
         {/* De Titel */}
         <div className="mt-10 mb-4">
@@ -39,7 +40,6 @@ export default async function Home() {
         
         {/* Het overzicht met filters en knoppen */}
         <RunOverview runs={runs || []} user={user} />
-      </main>
-    </div>
+    </main>
   );
 }

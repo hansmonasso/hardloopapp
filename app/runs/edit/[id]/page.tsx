@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../../lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
+import { useLanguage } from '../../../context/LanguageContext'
 
 const STANDARD_DISTANCES = [5, 10, 15, 21.1, 25, 30, 42.2]
 
 export default function EditRunPage() {
+  const { t, lang } = useLanguage()
   const router = useRouter()
   const params = useParams()
   const runId = params.id as string
@@ -36,13 +38,19 @@ export default function EditRunPage() {
 
     const { data: run, error } = await supabase.from('runs').select('*').eq('id', runId).single()
 
-    if (error || !run) { alert('Loopje niet gevonden'); return router.push('/') }
-    if (run.organizer_id !== user.id) { alert('Geen rechten'); return router.push('/') }
+    if (error || !run) { 
+        alert(lang === 'de' ? 'Lauf nicht gefunden' : 'Loopje niet gevonden'); 
+        return router.push('/') 
+    }
+    if (run.organizer_id !== user.id) { 
+        alert(lang === 'de' ? 'Keine Berechtigung' : 'Geen rechten'); 
+        return router.push('/') 
+    }
 
     // Check deelnemers
     const { data: participants } = await supabase.from('participants').select('user_id').eq('run_id', runId)
     if (participants?.some(p => p.user_id !== user.id)) {
-      alert('Er zijn al deelnemers, aanpassen niet meer mogelijk.')
+      alert(lang === 'de' ? 'Kann nicht bearbeiten, da bereits Teilnehmer vorhanden sind.' : 'Er zijn al deelnemers, aanpassen niet meer mogelijk.')
       return router.push('/')
     }
 
@@ -85,7 +93,7 @@ export default function EditRunPage() {
 
     if (isRace) {
         if (selectedDistances.length === 0) {
-            setError("Kies een afstand")
+            setError(lang === 'de' ? 'Wählen Sie mindestens eine Distanz.' : 'Kies een afstand')
             setLoading(false)
             return
         }
@@ -112,7 +120,7 @@ export default function EditRunPage() {
       .eq('id', runId)
 
     if (updateError) {
-      setError('Er ging iets mis: ' + updateError.message)
+      setError(lang === 'de' ? 'Fehler beim Speichern: ' + updateError.message : 'Er ging iets mis: ' + updateError.message)
       setLoading(false)
     } else {
       router.push('/') 
@@ -120,27 +128,27 @@ export default function EditRunPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center">Laden...</div>
+  if (loading) return <div className="p-8 text-center">{lang === 'de' ? 'Wird geladen...' : 'Laden...'}</div>
 
   return (
     <div className="min-h-screen p-8 flex justify-center">
       <div className="max-w-xl w-full">
-        <h1 className="text-3xl font-bold mb-6">Loopje Aanpassen</h1>
+        <h1 className="text-3xl font-bold mb-6">{lang === 'de' ? 'Lauf bearbeiten' : 'Loopje Aanpassen'}</h1>
         <form onSubmit={handleUpdate} className="flex flex-col gap-4 bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
           
           <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
             <input type="checkbox" checked={isRace} onChange={(e) => setIsRace(e.target.checked)} className="w-5 h-5 accent-yellow-500 cursor-pointer" />
-            <label className="font-bold cursor-pointer">🏆 Is dit een officiële wedstrijd?</label>
+            <label className="font-bold cursor-pointer">🏆 {lang === 'de' ? 'Ist dies ein offizieller Wettkampf?' : 'Is dit een officiële wedstrijd?'}</label>
           </div>
 
           {isRace && (
             <div className="space-y-4 p-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-800/30">
               <div>
-                <label className="block text-sm font-bold mb-1">Naam evenement</label>
+                <label className="block text-sm font-bold mb-1">{lang === 'de' ? 'Name des Events' : 'Naam evenement'}</label>
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700" />
               </div>
               <div>
-                <label className="block text-sm font-bold mb-2">Afstanden</label>
+                <label className="block text-sm font-bold mb-2">{lang === 'de' ? 'Distanzen' : 'Afstanden'}</label>
                 <div className="grid grid-cols-4 gap-2">
                     {STANDARD_DISTANCES.map((dist) => (
                         <div key={dist} onClick={() => toggleDistance(dist)} className={`cursor-pointer text-center py-2 px-1 rounded border text-sm font-medium transition ${selectedDistances.includes(dist) ? 'bg-yellow-400 border-yellow-500 text-black' : 'bg-white border-yellow-200 hover:bg-yellow-100'}`}>
@@ -150,39 +158,39 @@ export default function EditRunPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold mb-1">Link</label>
+                <label className="block text-sm font-bold mb-1">{lang === 'de' ? 'Link' : 'Link'}</label>
                 <input type="url" value={externalLink} onChange={(e) => setExternalLink(e.target.value)} className="w-full p-3 rounded-lg border border-yellow-300 dark:border-yellow-700" />
               </div>
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-1">Datum & Tijd</label>
+            <label className="block text-sm font-medium mb-1">{lang === 'de' ? 'Datum & Uhrzeit' : 'Datum & Tijd'}</label>
             <input type="datetime-local" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Startlocatie</label>
+            <label className="block text-sm font-medium mb-1">{lang === 'de' ? 'Startort' : 'Startlocatie'}</label>
             <input type="text" required value={location} onChange={(e) => setLocation(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" />
           </div>
 
           {!isRace && (
             <>
                 <div>
-                    <label className="block text-sm font-medium mb-1">Afstand (km)</label>
+                    <label className="block text-sm font-medium mb-1">{lang === 'de' ? 'Distanz (km)' : 'Afstand (km)'}</label>
                     <input type="number" step="0.1" value={distance} onChange={(e) => setDistance(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium mb-1">Pace van</label><input type="text" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
-                    <div><label className="block text-sm font-medium mb-1">Pace tot</label><input type="text" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
+                    <div><label className="block text-sm font-medium mb-1">{lang === 'de' ? 'Tempo von' : 'Pace van'}</label><input type="text" value={paceMin} onChange={(e) => setPaceMin(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
+                    <div><label className="block text-sm font-medium mb-1">{lang === 'de' ? 'Tempo bis' : 'Pace tot'}</label><input type="text" value={paceMax} onChange={(e) => setPaceMax(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
                 </div>
             </>
           )}
 
-          <div><label className="block text-sm font-medium mb-1">Extra info</label><textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
+          <div><label className="block text-sm font-medium mb-1">{lang === 'de' ? 'Zusätzliche Infos' : 'Extra info'}</label><textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full p-3 rounded-lg border border-gray-300" /></div>
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <div className="flex gap-4 mt-2">
-            <button type="submit" disabled={loading} className="flex-1 bg-black text-white p-3 rounded-lg font-bold hover:opacity-80">{loading ? 'Bezig...' : 'Opslaan'}</button>
-            <button type="button" onClick={() => router.back()} className="px-4 py-3 border rounded-lg">Annuleren</button>
+            <button type="submit" disabled={loading} className="flex-1 bg-black text-white p-3 rounded-lg font-bold hover:opacity-80">{loading ? 'Bezig...' : (lang === 'de' ? 'Speichern' : 'Opslaan')}</button>
+            <button type="button" onClick={() => router.back()} className="px-4 py-3 border rounded-lg">{lang === 'de' ? 'Abbrechen' : 'Annuleren'}</button>
           </div>
         </form>
       </div>

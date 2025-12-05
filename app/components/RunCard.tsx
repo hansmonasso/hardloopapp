@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '../context/LanguageContext'
 
 interface RunCardProps {
   run: any
@@ -12,12 +13,14 @@ interface RunCardProps {
 }
 
 export default function RunCard({ run, currentUserId, isCompactView = false, isHighlighted = false }: RunCardProps) {
+  const { t, lang } = useLanguage()
   const router = useRouter()
   const cardRef = useRef<HTMLDivElement>(null)
   const [participants, setParticipants] = useState<any[]>([])
   const [isJoined, setIsJoined] = useState(false)
   const [loading, setLoading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false) // FIX: State is nu in de component
 
   const isOrganizer = currentUserId === run.organizer_id
 
@@ -44,9 +47,8 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   async function toggleParticipation() {
     if (!currentUserId) {
-        if(confirm('Om je aan te melden moet je even inloggen. Wil je naar de inlogpagina?')) {
-            router.push('/login')
-        }
+        // FIX: Gebruikt de modale pop-up in plaats van de foute browser-confirm
+        setShowLoginModal(true)
         return
     }
 
@@ -61,7 +63,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   }
 
   async function deleteRun() {
-    if (!confirm('Weet je zeker dat je dit loopje wilt verwijderen?')) return
+    if (!confirm(lang === 'de' ? 'Sind Sie sicher, dass Sie diesen Lauf löschen möchten?' : 'Weet je zeker dat je dit loopje wilt verwijderen?')) return
     const { error } = await supabase.from('runs').delete().eq('id', run.id)
     if (!error) router.refresh()
   }
@@ -81,18 +83,22 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   const formatDatum = (datumString: string, short = false) => {
     const datum = new Date(datumString)
-    if (short) return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: '2-digit', month: 'short' })
-    return datum.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+    if (short) return datum.toLocaleDateString(lang === 'de' ? 'de-DE' : 'nl-NL', { weekday: 'short', day: '2-digit', month: 'short' })
+    return datum.toLocaleDateString(lang === 'de' ? 'de-DE' : 'nl-NL', { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
   }
   
   const formatTijd = (datumString: string) => {
-      return new Date(datumString).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+      return new Date(datumString).toLocaleTimeString(lang === 'de' ? 'de-DE' : 'nl-NL', { hour: '2-digit', minute: '2-digit' })
   }
 
   const isRace = run.is_race
+  const isWomenOnly = run.women_only
   
+  // Kleuren voor de kaart
   let cardBorderClass = isRace 
     ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50/50 dark:bg-yellow-900/10' 
+    : isWomenOnly 
+    ? 'border-pink-400 dark:border-pink-600 bg-pink-50/50 dark:bg-pink-900/10' 
     : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900'
   
   if (isHighlighted) {
@@ -103,10 +109,36 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
     ? run.race_distances.replace(/,/g, ' /').replace(/\./g, ',')
     : run.distance_km.toString().replace('.', ',')
 
+  // MODAL COMPONENT (Binnen de RunCard zodat t, lang, router en setShowLoginModal beschikbaar zijn)
+  const LoginModal = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-xl max-w-sm w-full text-center border border-gray-200 dark:border-gray-800">
+        <p className="mb-6 font-medium text-lg">
+          {t.card_join_login_prompt}
+        </p>
+        <div className="flex justify-around gap-4">
+          <button 
+            onClick={() => setShowLoginModal(false)} 
+            className="px-4 py-2 text-sm rounded-full border border-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            {lang === 'de' ? 'Abbrechen' : 'Nee'}
+          </button>
+          <button 
+            onClick={() => router.push('/login')} 
+            className="px-4 py-2 text-sm rounded-full bg-blue-600 text-white hover:bg-blue-700"
+          >
+            {lang === 'de' ? 'Anmelden' : 'Ja, inloggen'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   // --- COMPACTE WEERGAVE ---
   if (isCompactView) {
     return (
         <div ref={cardRef} className={`${cardBorderClass} border rounded-lg transition overflow-hidden`}>
+            {showLoginModal && <LoginModal />}
             <div onClick={() => setIsExpanded(!isExpanded)} className="flex items-center justify-between p-4 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5">
                 <div className="flex items-center gap-4 overflow-hidden">
                     <div className="flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 min-w-[60px]">
@@ -116,6 +148,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
                     <div className="flex flex-col truncate">
                         <div className="flex items-center gap-2">
                             {isRace && <span className="text-xs">🏆</span>}
+                            {isWomenOnly && <span className="text-xs text-pink-500">🚺</span>}
                             <span className="font-bold truncate text-gray-900 dark:text-gray-100">{run.title || run.location}</span>
                         </div>
                         <span className="text-xs text-gray-500 truncate flex items-center gap-2">⏰ {formatTijd(run.start_time)} {run.title && <span>• 📍 {run.location}</span>}</span>
@@ -124,7 +157,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
                 <div className="flex items-center gap-3 pl-2 flex-shrink-0">
                     <div className="text-right">
                         <span className="block font-bold text-gray-900 dark:text-gray-100">{distanceDisplay} km</span>
-                        {isJoined && <span className="text-[10px] text-green-600 font-bold block bg-green-100 dark:bg-green-900 px-1 rounded">DEELNEMER</span>}
+                        {isJoined && <span className="text-[10px] text-green-600 font-bold block bg-green-100 dark:bg-green-900 px-1 rounded">{t.card_participant_label}</span>}
                     </div>
                     <button onClick={handleShare} className="p-2 text-gray-400 hover:text-blue-600"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg></button>
                     <svg className={`w-5 h-5 text-gray-400 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
@@ -134,23 +167,22 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
                 <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-black/20">
                     <div className="mb-4 text-sm text-gray-600 dark:text-gray-300">
                         {!isRace && <p className="mb-1">⚡ Pace: {run.pace_min} - {run.pace_max} min/km</p>}
-                        <p>👤 Org: {isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</p>
-                        {/* Contrast aangepast: text-gray-700 dark:text-gray-300 */}
+                        <p>👤 {t.card_organized_by} {isOrganizer ? t.card_you : (run.organizer?.full_name || 'Onbekend')}</p>
                         {run.description && <p className="italic mt-2 text-gray-700 dark:text-gray-300">"{run.description}"</p>}
                     </div>
                     {isOrganizer && !hasOtherParticipants && (
                         <div className="flex gap-2 mb-4">
-                            <button onClick={() => router.push(`/runs/edit/${run.id}`)} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">Aanpassen</button>
-                            <button onClick={deleteRun} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">Verwijderen</button>
+                            <button onClick={() => router.push(`/runs/edit/${run.id}`)} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">{t.card_edit}</button>
+                            <button onClick={deleteRun} className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200">{t.card_delete}</button>
                         </div>
                     )}
                     <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                         <div className="flex flex-wrap gap-1">
-                            {participants.length > 0 ? participants.map((p) => (<span key={p.user_id} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">{p.profiles?.full_name}</span>)) : <span className="text-xs text-gray-400">Nog geen lopers</span>}
+                            {participants.length > 0 ? participants.map((p) => (<span key={p.user_id} className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">{p.profiles?.full_name}</span>)) : <span className="text-xs text-gray-400">{t.card_no_participants}</span>}
                         </div>
                         <div className="flex gap-2 w-full sm:w-auto">
-                            <button onClick={toggleParticipation} disabled={loading} className={`text-sm px-4 py-2 rounded-lg font-bold flex-1 sm:flex-none ${isJoined ? 'bg-red-100 text-red-600' : 'bg-black text-white dark:bg-white dark:text-black'}`}>{loading ? '...' : (isJoined ? 'Afmelden' : 'Meedoen')}</button>
-                            {isRace && run.external_link && <a href={run.external_link} target="_blank" rel="noopener noreferrer" className="text-sm px-4 py-2 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-500">Info ↗</a>}
+                            <button onClick={toggleParticipation} disabled={loading} className={`text-sm px-4 py-2 rounded-lg font-bold flex-1 sm:flex-none ${isJoined ? 'bg-red-100 text-red-600' : 'bg-black text-white dark:bg-white dark:text-black'}`}>{loading ? '...' : (isJoined ? t.card_leave : t.card_join)}</button>
+                            {isRace && run.external_link && <a href={run.external_link} target="_blank" rel="noopener noreferrer" className="text-sm px-4 py-2 bg-yellow-400 text-black font-bold rounded-lg hover:bg-yellow-500">{t.race_info_btn} ↗</a>}
                         </div>
                     </div>
                 </div>
@@ -162,7 +194,9 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
   // --- STANDAARD WEERGAVE ---
   return (
     <div ref={cardRef} className={`${cardBorderClass} border-2 p-6 rounded-xl shadow-sm hover:shadow-md transition flex flex-col h-full relative group`}>
-      {isRace && <div className="absolute -top-3 left-6 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm">🏆 WEDSTRIJD</div>}
+      {showLoginModal && <LoginModal />}
+      {isRace && <div className="absolute -top-3 left-6 bg-yellow-400 text-black text-xs font-bold px-3 py-1 rounded-full shadow-sm">🏆 {t.race_badge}</div>}
+      {isWomenOnly && <div className="absolute -top-3 right-6 bg-pink-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">🚺 {lang === 'de' ? 'NUR FRAUEN' : (lang === 'en' ? 'WOMEN ONLY' : 'ALLEEN VROUWEN')}</div>}
       
       <div className="absolute top-4 right-4 flex gap-2 z-10">
           <button onClick={handleShare} className="text-gray-400 hover:text-blue-600 p-2 bg-white/80 dark:bg-black/50 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm transition"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg></button>
@@ -195,27 +229,26 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
       
       <div className="space-y-3 text-gray-600 dark:text-gray-300 mb-6 flex-grow border-t border-black/5 pt-4">
         {!isRace && <p className="flex items-center gap-2"><span className="text-lg">⚡</span> <span className="text-sm font-medium">Pace: {run.pace_min} - {run.pace_max} min/km</span></p>}
-        <p className="flex items-center gap-2 text-sm"><span className="text-lg">👤</span> <span>Org: <span className="font-semibold">{isOrganizer ? 'Jijzelf' : (run.organizer?.full_name || 'Onbekend')}</span></span></p>
-        {/* Contrast aangepast: text-gray-700 dark:text-gray-300 en achtergrond iets donkerder in dark mode */}
+        <p className="flex items-center gap-2 text-sm"><span className="text-lg">👤</span> <span>{t.card_organized_by} <span className="font-semibold">{isOrganizer ? t.card_you : (run.organizer?.full_name || 'Onbekend')}</span></span></p>
         {run.description && <p className="text-sm italic mt-2 text-gray-700 dark:text-gray-300 bg-white/50 dark:bg-black/30 p-3 rounded-lg">"{run.description}"</p>}
         
         <div className="mt-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">Wie gaan er mee? ({participants.length})</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">{t.card_participants} ({participants.length})</p>
             {participants.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                     {participants.map((p) => (
-                        <span key={p.user_id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span key={p.user_id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 dark:text-blue-200">
                             {p.profiles?.full_name || 'Onbekend'}
                         </span>
                     ))}
                 </div>
-            ) : <p className="text-xs text-gray-400 italic">Nog geen aanmeldingen uit de groep</p>}
+            ) : <p className="text-xs text-gray-400 italic">{t.card_no_participants}</p>}
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <button onClick={toggleParticipation} disabled={loading} className={`w-full border-2 font-bold py-3 rounded-xl transition shadow-sm ${isJoined ? 'border-red-100 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white' : 'border-black dark:border-white text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black'}`}>{loading ? 'Bezig...' : (isJoined ? 'Ik ga toch niet mee' : 'Ik ga mee!')}</button>
-        {isRace && run.external_link && <a href={run.external_link} target="_blank" rel="noopener noreferrer" className="w-full text-center bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">Inschrijven / Info <span className="text-lg">↗</span></a>}
+        <button onClick={toggleParticipation} disabled={loading} className={`w-full border-2 font-bold py-3 rounded-xl transition shadow-sm ${isJoined ? 'border-red-100 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white' : 'border-black dark:border-white text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black'}`}>{loading ? 'Bezig...' : (isJoined ? t.card_leave : t.card_join)}</button>
+        {isRace && run.external_link && <a href={run.external_link} target="_blank" rel="noopener noreferrer" className="w-full text-center bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">{t.race_info_btn} <span className="text-lg">↗</span></a>}
       </div>
     </div>
   )
