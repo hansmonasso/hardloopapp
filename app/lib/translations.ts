@@ -1,3 +1,14 @@
+Mijn excuses, ik begrijp dat het niet tonen van de code direct voor frustratie zorgt. Hier is de volledige code voor app/context/LanguageContext.tsx als platte tekst.
+
+Dit is het bestand met de vertalingen, inclusief de cruciale fix voor de foutmelding die u zag (Property 'card_join_login_prompt' does not exist).
+
+TypeScript
+
+'use client'
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+// --- DEEL 1: DE VERTALINGEN (Alles is hier) ---
 export type Language = 'nl' | 'en' | 'de';
 
 export const translations = {
@@ -31,6 +42,8 @@ export const translations = {
     card_participant_label: "DEELNEMER",
     card_edit: "Aanpassen",
     card_delete: "Verwijderen",
+    // FIX: Deze sleutel is toegevoegd
+    card_join_login_prompt: "Om je aan te melden moet je even inloggen. Wil je naar de inlogpagina?",
     
     race_badge: "WEDSTRIJD",
     race_info_btn: "Inschrijven / Info",
@@ -65,7 +78,8 @@ export const translations = {
     card_participant_label: "JOINED",
     card_edit: "Edit",
     card_delete: "Delete",
-    
+    card_join_login_prompt: "You need to log in to join this run. Go to the login page?",
+
     race_badge: "RACE",
     race_info_btn: "Register / Info",
   },
@@ -99,6 +113,7 @@ export const translations = {
     card_participant_label: "TEILNEHMER",
     card_edit: "Bearbeiten",
     card_delete: "Löschen",
+    card_join_login_prompt: "Sie müssen sich anmelden, um teilzunehmen. Möchten Sie zur Anmeldeseite gehen?",
     
     race_badge: "WETTKAMPF",
     race_info_btn: "Anmeldung / Info",
