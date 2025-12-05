@@ -47,7 +47,7 @@ export default function RunCard({ run, currentUserId, isCompactView = false, isH
 
   async function toggleParticipation() {
     if (!currentUserId) {
-        // FIX: Gebruikt de modale pop-up
+        // FIX: Gebruikt de modale pop-up (de 'confirm' wordt vervangen door de state)
         setShowLoginModal(true)
         return
     }
