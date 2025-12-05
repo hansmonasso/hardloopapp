@@ -1,9 +1,3 @@
-Mijn excuses, ik begrijp dat het niet tonen van de code direct voor frustratie zorgt. Hier is de volledige code voor app/context/LanguageContext.tsx als platte tekst.
-
-Dit is het bestand met de vertalingen, inclusief de cruciale fix voor de foutmelding die u zag (Property 'card_join_login_prompt' does not exist).
-
-TypeScript
-
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -119,3 +113,41 @@ export const translations = {
     race_info_btn: "Anmeldung / Info",
   }
 };
+
+// --- DEEL 2: DE LOGICA ---
+
+interface LanguageContextType {
+  lang: Language;
+  setLang: (lang: Language) => void;
+  t: typeof translations['nl'];
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [lang, setLang] = useState<Language>('nl');
+
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('socialrun_lang') as Language : null;
+    if (saved && (saved === 'nl' || saved === 'en' || saved === 'de')) {
+      setLang(saved);
+    }
+  }, []);
+
+  const handleSetLang = (l: Language) => {
+    setLang(l);
+    localStorage.setItem('socialrun_lang', l);
+  };
+
+  return (
+    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t: translations[lang] }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('useLanguage must be used within a LanguageProvider');
+  return context;
+}
