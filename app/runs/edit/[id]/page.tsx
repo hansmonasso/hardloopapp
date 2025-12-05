@@ -31,7 +31,7 @@ export default function EditRunPage() {
   // NIEUW: State voor Women Only
   const [isWomenOnly, setIsWomenOnly] = useState(false) 
 
-  // Hulpfunctie voor vertaling
+  // Vertaalhulp voor specifieke teksten in dit bestand
   const trans = (nl: string, en: string, de: string) => {
       if (lang === 'en') return en;
       if (lang === 'de') return de;
@@ -61,13 +61,15 @@ export default function EditRunPage() {
         return router.push('/') 
     }
 
-    // Check deelnemers
+    // Check deelnemers (we halen alleen user_id op)
     const { data: participants } = await supabase
       .from('participants')
       .select('user_id')
       .eq('run_id', runId)
     
-    if (participants?.some(p => p.user.id !== user.id)) {
+    // FIX: We controleren of iemand ANDERS dan de organisator (user.id) zich heeft aangemeld.
+    // Deelnemer (p) heeft user_id. We vergelijken dit met de ID van de ingelogde gebruiker (user.id).
+    if (participants?.some((p) => p.user_id !== user.id)) {
       alert(trans('Er zijn al deelnemers, aanpassen niet meer mogelijk.', 'Participants have already joined, editing is not possible.', 'Es haben sich bereits Teilnehmer angemeldet, Bearbeitung nicht mehr möglich.'))
       return router.push('/')
     }
@@ -85,7 +87,7 @@ export default function EditRunPage() {
     setIsRace(run.is_race || false)
     setTitle(run.title || '')
     setExternalLink(run.external_link || '')
-    setIsWomenOnly(run.women_only || false) // NIEUW: Women Only vullen
+    setIsWomenOnly(run.women_only || false) 
     
     if (run.race_distances) {
         const dists = run.race_distances.split(',').map((d:string) => parseFloat(d))
@@ -136,7 +138,7 @@ export default function EditRunPage() {
         is_race: isRace,
         title: isRace ? title : null,
         external_link: externalLink,
-        women_only: isWomenOnly, // NIEUW: Opslaan
+        women_only: isWomenOnly, // Opslaan
       })
       .eq('id', runId)
 
