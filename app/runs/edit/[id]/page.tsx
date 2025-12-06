@@ -75,11 +75,10 @@ export default function EditRunPage() {
 
     // --- FIX VOOR TIJDSZONE BIJ LEZEN ---
     const d = new Date(run.start_time)
-    // We moeten de omgekeerde offset toepassen die we bij het opslaan deden,
-    // zodat de tijdzone weer neutraal is voor het invoerveld.
-    // De browser past de tijdzone van de gebruiker (getTimezoneOffset) toe.
-    const offsetMinutes = d.getTimezoneOffset();
-    const correctedTime = new Date(d.getTime() - (offsetMinutes * 60000));
+    // We corrigeren de tijdzone-offset (in minuten * 60000 milliseconden)
+    const offsetMilliseconds = d.getTimezoneOffset() * 60000;
+    // We tellen de offset BIJ de opgeslagen tijd, zodat de lokale tijd correct wordt weergegeven in het invoerveld.
+    const correctedTime = new Date(d.getTime() - offsetMilliseconds);
     
     // Format de gecorrigeerde tijd naar het vereiste 'YYYY-MM-DDTHH:MM' formaat
     const localIso = correctedTime.toISOString().slice(0, 16);
@@ -121,7 +120,8 @@ export default function EditRunPage() {
     // --- FIX VOOR TIJDSZONE BIJ SCHRIJVEN ---
     const localDate = new Date(date);
     const offsetMilliseconds = localDate.getTimezoneOffset() * 60000;
-    // Corrigeer de tijd: De browser stuurde UTC-tijd. We tellen de offset terug.
+    // Corrigeer de tijd: De browser stuurde UTC-tijd. We halen de offset eraf, 
+    // zodat de database de ZUIVERE, onveranderde lokale tijd opslaat.
     const correctedDate = new Date(localDate.getTime() - offsetMilliseconds);
     // ----------------------------------------
 
