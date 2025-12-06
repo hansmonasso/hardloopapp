@@ -61,21 +61,29 @@ export default function EditRunPage() {
         return router.push('/') 
     }
 
-    // Check deelnemers (we halen alleen user_id op)
+    // Check deelnemers
     const { data: participants } = await supabase
       .from('participants')
       .select('user_id')
       .eq('run_id', runId)
     
-    // FIX: We controleren of iemand ANDERS dan de organisator (user.id) zich heeft aangemeld.
-    // Deelnemer (p) heeft user_id. We vergelijken dit met de ID van de ingelogde gebruiker (user.id).
+    // Deelnemers check
     if (participants?.some((p) => p.user_id !== user.id)) {
       alert(trans('Er zijn al deelnemers, aanpassen niet meer mogelijk.', 'Participants have already joined, editing is not possible.', 'Es haben sich bereits Teilnehmer angemeldet, Bearbeitung nicht mehr möglich.'))
       return router.push('/')
     }
 
+    // --- FIX VOOR TIJDSZONE BIJ LEZEN ---
     const d = new Date(run.start_time)
-    const localIso = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16)
+    // We moeten de omgekeerde offset toepassen die we bij het opslaan deden,
+    // zodat de tijdzone weer neutraal is voor het invoerveld.
+    // De browser past de tijdzone van de gebruiker (getTimezoneOffset) toe.
+    const offsetMinutes = d.getTimezoneOffset();
+    const correctedTime = new Date(d.getTime() - (offsetMinutes * 60000));
+    
+    // Format de gecorrigeerde tijd naar het vereiste 'YYYY-MM-DDTHH:MM' formaat
+    const localIso = correctedTime.toISOString().slice(0, 16);
+    // ------------------------------------
     
     // Data vullen
     setDate(localIso)
@@ -110,6 +118,13 @@ export default function EditRunPage() {
     setLoading(true)
     setError('')
 
+    // --- FIX VOOR TIJDSZONE BIJ SCHRIJVEN ---
+    const localDate = new Date(date);
+    const offsetMilliseconds = localDate.getTimezoneOffset() * 60000;
+    // Corrigeer de tijd: De browser stuurde UTC-tijd. We tellen de offset terug.
+    const correctedDate = new Date(localDate.getTime() - offsetMilliseconds);
+    // ----------------------------------------
+
     let finalDistanceKm = 0
     let finalRaceDistances = null
 
@@ -128,7 +143,8 @@ export default function EditRunPage() {
     const { error: updateError } = await supabase
       .from('runs')
       .update({
-        start_time: date,
+        // Gebruik de gecorrigeerde datum
+        start_time: correctedDate.toISOString(), 
         location: location,
         distance_km: finalDistanceKm,
         race_distances: finalRaceDistances,
@@ -136,9 +152,9 @@ export default function EditRunPage() {
         pace_max: isRace ? null : paceMax,
         description: description,
         is_race: isRace,
-        title: isRace ? title : null,
+        title: title,
         external_link: externalLink,
-        women_only: isWomenOnly, // Opslaan
+        women_only: isWomenOnly,
       })
       .eq('id', runId)
 
