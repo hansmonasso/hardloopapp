@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
-import { useLanguage } from '../../context/LanguageContext' // Het originele pad
+import { useLanguage } from '../../context/LanguageContext'
 
 const STANDARD_DISTANCES = [5, 10, 15, 21.1, 25, 30, 42.2]
 
@@ -26,8 +26,6 @@ export default function CreateRunPage() {
   const [title, setTitle] = useState('')
   const [externalLink, setExternalLink] = useState('')
   const [selectedDistances, setSelectedDistances] = useState<number[]>([])
-  
-  // NIEUW: Women Only State
   const [isWomenOnly, setIsWomenOnly] = useState(false) 
 
   async function validateAddress(cityInput: string, streetInput: string): Promise<string | null> {
@@ -88,6 +86,15 @@ export default function CreateRunPage() {
         return 
     }
 
+    // --- FIX VOOR TIJDSZONE PROBLEEM ---
+    const localDate = new Date(date);
+    // Berekent de tijdszone-offset in minuten en converteert deze naar milliseconden.
+    const offsetMilliseconds = localDate.getTimezoneOffset() * 60000;
+    // Corrigeer de tijd: De browser stuurde UTC-tijd. We tellen de offset terug, 
+    // zodat de database de ZUIVERE, onveranderde lokale tijd opslaat.
+    const correctedDate = new Date(localDate.getTime() - offsetMilliseconds);
+    // ------------------------------------
+
     let finalDistanceKm = 0
     let finalRaceDistances = null
 
@@ -105,7 +112,8 @@ export default function CreateRunPage() {
 
     const { error: insertError } = await supabase.from('runs').insert({
       organizer_id: user.id,
-      start_time: date,
+      // Gebruik de gecorrigeerde datum
+      start_time: correctedDate.toISOString(), 
       location: `${street}, ${city}`,
       province: foundProvince,
       distance_km: finalDistanceKm, 
@@ -116,7 +124,7 @@ export default function CreateRunPage() {
       is_race: isRace,
       title: isRace ? title : null,
       external_link: externalLink,
-      women_only: isWomenOnly, // NIEUW: Opslaan
+      women_only: isWomenOnly,
     })
 
     if (insertError) {
@@ -145,7 +153,7 @@ export default function CreateRunPage() {
                 <label htmlFor="raceToggle" className="cursor-pointer font-bold select-none flex items-center gap-2">🏆 {lang === 'de' ? 'Ist dies ein offizieller Wettkampf?' : 'Is dit een officiële wedstrijd?'}</label>
               </div>
 
-              {/* WOMEN ONLY TOGGLE (NIEUW) */}
+              {/* WOMEN ONLY TOGGLE */}
               <div className="flex items-center gap-3 p-4 bg-pink-50 dark:bg-pink-900/20 rounded-lg border border-pink-100 dark:border-pink-800/30">
                 <input type="checkbox" id="womenOnlyToggle" checked={isWomenOnly} onChange={(e) => setIsWomenOnly(e.target.checked)} className="w-5 h-5 accent-pink-500 cursor-pointer" />
                 <label htmlFor="womenOnlyToggle" className="cursor-pointer font-bold select-none flex items-center gap-2 text-pink-700 dark:text-pink-300">
