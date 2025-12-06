@@ -27,7 +27,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
   // Toggle States
   const [filterOnlyRaces, setFilterOnlyRaces] = useState(false)
   const [filterOnlySocial, setFilterOnlySocial] = useState(false)
-  const [filterWomenOnly, setFilterWomenOnly] = useState(false) // De nieuwe filterstaat
+  const [filterWomenOnly, setFilterWomenOnly] = useState(false) 
   const [showHistorical, setShowHistorical] = useState(false)
   const [isCompactView, setIsCompactView] = useState(false)
   
@@ -57,7 +57,6 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
     if (filterOnlySocial && isRace) return false;
 
     // 3. VROUWEN ONLY LOGICA
-    // Als filter is aangevinkt, toon alleen runs waar women_only waar is.
     if (filterWomenOnly && !run.women_only) return false; 
 
     return true
@@ -100,6 +99,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
             </Link>
          )}
          
+         {/* Tools Knoppen */}
          <Link href="/calculator" className="bg-white border border-gray-300 text-black px-5 py-3 rounded-full font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
             <span>🧮</span> {t.nav_calc}
          </Link>
@@ -134,7 +134,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
           <div><input type="number" placeholder="Min km" value={filterMinDist} onChange={(e) => setFilterMinDist(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900" /></div>
           <div><input type="number" placeholder="Max km" value={filterMaxDist} onChange={(e) => setFilterMaxDist(e.target.value)} className="w-full p-2 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900" /></div>
           
-          {/* CHECKBOXES - Nu 4 opties */}
+          {/* CHECKBOXES - DE GROEP FILTERS */}
           <div className="flex flex-col justify-center gap-1 h-full py-1">
               {/* Alleen Sociaal */}
               <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -159,7 +159,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
                 <input type="checkbox" checked={showHistorical} onChange={(e) => setShowHistorical(e.target.checked)} className="w-4 h-4 accent-gray-500" /> 
                 {t.filter_history}
               </label>
-              
+
               {/* Compacte Lijst */}
               <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-blue-600 dark:text-blue-400">
                 <input type="checkbox" checked={isCompactView} onChange={(e) => setIsCompactView(e.target.checked)} className="w-4 h-4 accent-blue-600" /> 
@@ -182,7 +182,7 @@ export default function RunOverview({ runs, user }: RunOverviewProps) {
         </h2>
         
         {filteredRuns.length > 0 ? (
-          <div className={isCompactView ? "flex flex-col gap-3" : "grid gap-6 md:grid-cols-2"}>
+          <div className="grid gap-6 md:grid-cols-2">
             {filteredRuns.map((run: any) => (
               <RunCard 
                   key={run.id} 
